@@ -8,8 +8,8 @@ pub mod brightness;
 pub mod color_setting;
 
 pub struct DeviceVersion {
-    hw: String,
-    sw: String,
+    pub hw: String,
+    pub sw: String,
 }
 
 pub trait GoogleHomeDevice {
@@ -36,6 +36,7 @@ pub enum CombinedDeviceError<T: Error> {
     Other(#[from] T)
 }
 
+#[derive(Debug, PartialEq, Eq, Deserialize, Serialize)]
 pub enum Language {
     Danish,
     Dutch,

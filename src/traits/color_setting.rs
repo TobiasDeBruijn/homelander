@@ -3,7 +3,7 @@ use crate::traits::CombinedDeviceError;
 use serde::{Serialize, Deserialize};
 
 /// Color model support. At least one of the fields has to be [Some]
-#[derive(Debug, Serialize)]
+#[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ColorModelSupport {
     /// Full spectrum color model supported by the device.
     #[serde(rename = "colorModel")]
@@ -14,18 +14,18 @@ pub struct ColorModelSupport {
 }
 
 /// Supported color temperature range in Kelvin.
-#[derive(Debug, Serialize)]
+#[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ColorTemperature {
     /// Minimum supported color temperature in Kelvin.
     #[serde(rename = "temperatureMinK")]
-    temperature_min_k: i32,
+    pub temperature_min_k: i32,
     /// Maximum supported color temperature in Kelvin.
     #[serde(rename = "temperatureMaxK")]
-    temperature_max_k: i32,
+    pub temperature_max_k: i32,
 }
 
 /// Full spectrum color model supported by the device.
-#[derive(Debug, Serialize)]
+#[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ColorModel {
     #[serde(rename = "rgb")]
     Rgb,
@@ -33,18 +33,18 @@ pub enum ColorModel {
     Hsv,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Color {
     #[serde(rename = "temperatureK")]
-    temperature_k: Option<i32>,
+    pub temperature_k: Option<i32>,
     #[serde(rename = "spectrumRgb")]
-    spectrum_rgb: Option<i32>,
+    pub spectrum_rgb: Option<i32>,
     #[serde(rename = "spectrumHsv")]
-    spectrum_hsv: Option<SpectrumHsv>,
+    pub spectrum_hsv: Option<SpectrumHsv>,
 }
 
 /// Coloor to set
-#[derive(Debug, Deserialize)]
+#[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ColorCommand {
     /// Temperature value in Kelvin
     #[serde(rename = "temperature")]
@@ -57,11 +57,11 @@ pub enum ColorCommand {
     SpectrumHsv(SpectrumHsv),
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct SpectrumHsv {
-    hue: i32,
-    saturation: i32,
-    value: i32,
+    pub hue: i32,
+    pub saturation: i32,
+    pub value: i32,
 }
 
 /// This trait applies to devices, such as smart lights, that can change color or color temperature.

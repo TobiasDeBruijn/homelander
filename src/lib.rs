@@ -1,10 +1,10 @@
-use std::any::Any;
 use std::fmt::Debug;
-use crate::traits::{AppSelector, GoogleHomeDevice};
+use crate::traits::*;
 use serde::{Serialize, Deserialize};
 use crate::fulfillment::request::execute::CommandType;
 use crate::traits::arm_disarm::ArmDisarm;
 use crate::traits::brightness::Brightness;
+use crate::traits::color_setting::ColorSetting;
 
 mod traits;
 mod fulfillment;
@@ -22,8 +22,8 @@ impl Homelander {
         self.devices.retain(|f| f.id.ne(&id));
     }
 
-    fn execute(&self, command: DeviceCommand) -> Result<(), Box<dyn std::error::Error>> {
-
+    fn execute(&self, _command: DeviceCommand) -> Result<(), Box<dyn std::error::Error>> {
+        todo!();
         Ok(())
     }
 }
@@ -31,7 +31,47 @@ impl Homelander {
 pub struct Device<T: GoogleHomeDevice + ?Sized + 'static> {
     id: String,
     inner: Box<T>,
-    objects: Vec<Box<dyn Any>>,
+    traits: DeviceTraits,
+}
+
+#[derive(Default)]
+pub struct DeviceTraits {
+    app_selector: Option<Box<dyn AppSelector>>,
+    arm_disarm: Option<Box<dyn ArmDisarm>>,
+    brightness: Option<Box<dyn Brightness>>,
+    camera_stream: Option<Box<dyn CameraStream>>,
+    channel: Option<Box<dyn Channel>>,
+    color_setting: Option<Box<dyn ColorSetting>>,
+    cook: Option<Box<dyn Cook>>,
+    dispense: Option<Box<dyn Dispense>>,
+    dock: Option<Box<dyn Dock>>,
+    energy_storage: Option<Box<dyn EnergyStorage>>,
+    fan_speed: Option<Box<dyn FanSpeed>>,
+    fill: Option<Box<dyn Fill>>,
+    humidity_setting: Option<Box<dyn HumiditySetting>>,
+    input_selector: Option<Box<dyn InputSelector>>,
+    light_effects: Option<Box<dyn LightEffects>>,
+    locator: Option<Box<dyn Locator>>,
+    lock_unlock: Option<Box<dyn LockUnlock>>,
+    media_state: Option<Box<dyn MediaState>>,
+    modes: Option<Box<dyn Modes>>,
+    network_control: Option<Box<dyn NetworkControl>>,
+    object_detection: Option<Box<dyn ObjectDetection>>,
+    on_off: Option<Box<dyn OnOff>>,
+    open_close: Option<Box<dyn OpenClose>>,
+    reboot: Option<Box<dyn Reboot>>,
+    rotation: Option<Box<dyn Rotation>>,
+    run_cycle: Option<Box<dyn RunCycle>>,
+    sensor_state: Option<Box<dyn SensorState>>,
+    scene: Option<Box<dyn Scene>>,
+    software_update: Option<Box<dyn SoftwareUpdate>>,
+    start_stop: Option<Box<dyn StartStop>>,
+    status_report: Option<Box<dyn StatusReport>>,
+    temperature_control: Option<Box<dyn TemperatureControl>>,
+    temperature_setting: Option<Box<dyn TemperatureSetting>>,
+    timer: Option<Box<dyn Timer>>,
+    transport_control: Option<Box<dyn TransportControl>>,
+    volume: Option<Box<dyn Volume>>,
 }
 
 struct DeviceCommand {
@@ -44,27 +84,14 @@ impl<T: GoogleHomeDevice + Clone + Send + Sync + ?Sized + 'static> Device<T> {
         Self {
             id,
             inner: device,
-            objects: Vec::new(),
+            traits: DeviceTraits::default(),
         }
-    }
-
-    fn take_item<A: 'static>(&mut self) -> Option<&mut Box<A>> {
-        let mut items = self.objects
-            .iter_mut()
-            .filter(|x| x.is::<A>())
-            .collect::<Vec<_>>();
-        if items.is_empty() {
-            return None;
-        }
-
-        let item = items.remove(0);
-        item.downcast_mut()
     }
 
     fn execute(&mut self, command: CommandType) -> Result<(), Box<dyn std::error::Error>> {
         match command {
-            CommandType::ArmDisarm { follow_up_token, arm, cancel, arm_level} => {
-                let device = match self.take_item::<Box<dyn ArmDisarm>>() {
+            CommandType::ArmDisarm { arm, cancel, arm_level, ..} => {
+                let device = match &mut self.traits.arm_disarm {
                     Some(x) => x,
                     None => panic!("Unsupported")
                 };
@@ -88,11 +115,11 @@ impl<T: GoogleHomeDevice + Clone + Send + Sync + ?Sized + 'static> Device<T> {
     }
 
     pub fn set_app_selector(&mut self) where T: AppSelector {
-        self.objects.push(Box::new(self.inner.clone() as Box<dyn AppSelector>));
+        self.traits.app_selector = Some(self.inner.clone() as Box<dyn AppSelector>);
     }
 
     pub fn set_arm_disarm(&mut self) where T: ArmDisarm {
-        self.objects.push(Box::new(self.inner.clone() as Box<dyn ArmDisarm>));
+        self.traits.arm_disarm = Some(self.inner.clone() as Box<dyn ArmDisarm>);
     }
 }
 

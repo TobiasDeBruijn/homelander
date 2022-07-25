@@ -66,17 +66,15 @@ pub struct SpectrumHsv {
 
 /// This trait applies to devices, such as smart lights, that can change color or color temperature.
 pub trait ColorSetting {
-    type Error: Error;
-
     /// Indicates if the device supports using one-way (true) or two-way (false) communication. Set this attribute to true if the device cannot respond to a QUERY intent or Report State for this trait.
-    fn is_command_only_color_setting(&self) -> Result<bool, CombinedDeviceError<Self::Error>>;
+    fn is_command_only_color_setting(&self) -> Result<bool, CombinedDeviceError>;
 
     /// Color model support.
-    fn get_color_model_support(&self) -> Result<ColorModelSupport, CombinedDeviceError<Self::Error>>;
+    fn get_color_model_support(&self) -> Result<ColorModelSupport, CombinedDeviceError>;
 
     /// The current color setting currently being used on the device.
-    fn get_color(&self) -> Result<Color, CombinedDeviceError<Self::Error>>;
+    fn get_color(&self) -> Result<Color, CombinedDeviceError>;
 
     /// Set a color
-    fn set_color(&mut self, command: ColorCommand) -> Result<(), CombinedDeviceError<Self::Error>>;
+    fn set_color(&mut self, command: ColorCommand) -> Result<(), CombinedDeviceError>;
 }

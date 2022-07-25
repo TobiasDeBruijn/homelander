@@ -30,10 +30,13 @@ pub enum DeviceException {
 }
 
 #[derive(Debug, Error)]
-pub enum CombinedDeviceError<T: Error> {
+pub enum CombinedDeviceError {
+    #[error("{0}")]
     DeviceError(DeviceError),
+    #[error("{0}")]
     DeviceException(DeviceException),
-    Other(#[from] T)
+    #[error("{0}")]
+    Other(Box<dyn Error>)
 }
 
 #[derive(Debug, PartialEq, Eq, Deserialize, Serialize)]

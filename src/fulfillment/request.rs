@@ -1,13 +1,13 @@
 use serde::Deserialize;
 
-#[derive(Debug, PartialEq, Eq, Deserialize)]
+#[derive(Debug, PartialEq, Deserialize)]
 pub struct Request {
     #[serde(rename = "requestId")]
     request_id: String,
     inputs: Vec<Input>,
 }
 
-#[derive(Debug, PartialEq, Eq, Deserialize)]
+#[derive(Debug, PartialEq, Deserialize)]
 #[serde(tag = "intent", content = "payload")]
 pub enum Input {
     #[serde(rename = "action.devices.EXECUTE")]
@@ -99,15 +99,15 @@ pub mod query {
 pub mod execute {
     use serde::Deserialize;
     use crate::cook::CookingMode;
-    use crate::SizeUnit;
+    use crate::{Language, SizeUnit};
     use crate::traits::color_setting::ColorCommand;
 
-    #[derive(Debug, PartialEq, Eq, Deserialize)]
+    #[derive(Debug, PartialEq, Deserialize)]
     pub struct Execute {
         pub commands: Vec<Command>,
     }
 
-    #[derive(Debug, PartialEq, Eq, Deserialize)]
+    #[derive(Debug, PartialEq, Deserialize)]
     pub struct Command {
         pub devices: Vec<Device>,
         pub execution: Vec<CommandType>
@@ -118,11 +118,11 @@ pub mod execute {
         pub id: String,
     }
 
-    fn locate_default_lang() -> String {
-        "en".to_string()
+    fn locate_default_lang() -> Language {
+        Language::English
     }
 
-    #[derive(Debug, PartialEq, Eq, Deserialize)]
+    #[derive(Debug, PartialEq, Deserialize)]
     #[serde(tag = "command", content = "params")]
     pub enum CommandType {
         // TODO AppSelector
@@ -273,13 +273,13 @@ pub mod execute {
         #[serde(rename = "action.devices.commands.ColorLoop")]
         ColorLoop {
             /// Duration for the color loop command, in seconds.
-            duration: i32,
+            duration: Option<i32>,
         },
         /// Gradually lower the device's brightness and, optionally, adjusts the color temperature over a duration of time.
         #[serde(rename = "action.devices.commands.Sleep")]
         Sleep {
             /// Duration for the sleep command, in seconds.
-            duration: i32
+            duration: Option<i32>,
         },
         /// Stop the current light effect.
         #[serde(rename = "action.devices.commands.StopEffect")]
@@ -288,7 +288,7 @@ pub mod execute {
         #[serde(rename = "actin.devices.commands.Wake")]
         Wake {
             /// Duration for the wake command, in seconds.
-            duration: i32,
+            duration: Option<i32>,
         },
         /// Locate the target device by generating a local alert.
         #[serde(rename = "action.devices.commands.Locate")]
@@ -300,7 +300,7 @@ pub mod execute {
             /// Current language of query or display, for return of localized location strings if needed. See [supported languages](https://developers.google.com/assistant/smarthome/traits#supported-languages).
             /// Default: "en"
             #[serde(default = "locate_default_lang")]
-            lang: String,
+            lang: Language,
         },
         /// Lock or unlock the device.
         #[serde(rename = "action.devices.commands.LockUnlock")]
@@ -309,7 +309,7 @@ pub mod execute {
             lock: bool,
             /// Google-provided token for follow-up response.
             #[serde(rename = "followUpToken")]
-            follow_up_token: Option<String>
+            follow_up_token: String,
         },
     }
 }

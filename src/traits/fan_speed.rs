@@ -2,7 +2,7 @@ use serde::{Serialize, Deserialize};
 use thiserror::Error;
 use crate::{CombinedDeviceError, Language};
 
-#[derive(Debug, Error)]
+#[derive(Debug, Error, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub enum DeviceError {
     /// The device is already set to the maximum speed.

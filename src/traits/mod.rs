@@ -16,6 +16,11 @@ pub mod energy_storage;
 pub mod fan_speed;
 pub mod fill;
 pub mod humidity_setting;
+pub mod input_selector;
+pub mod light_effects;
+pub mod locator;
+pub mod lock_unlock;
+pub mod media_state;
 
 pub struct DeviceVersion {
     pub hw: String,
@@ -123,32 +128,6 @@ pub trait CameraStream {
 /// This trait belongs to devices that support TV channels on a media device.
 pub trait Channel {
     // TODO
-}
-
-/// Trait for devices that can change media inputs. These inputs can have dynamic names per device, and may represent audio or video feeds, hardwired or networked.
-pub trait InputSelector {
-
-}
-
-/// This trait belongs to devices that can support complex lighting commands to change state, such as looping through various colors.
-pub trait LightEffects {
-
-}
-
-/// This trait is used for devices that can be "found". This includes phones,
-/// robots (including vacuums and mowers), drones, and tag-specific products that attach to other devices.
-pub trait Locator {
-
-}
-
-/// This trait belongs to any devices that support locking and unlocking, and/or reporting a locked state.
-pub trait LockUnlock {
-
-}
-
-/// This trait is used for devices which are able to report media states.
-pub trait MediaState {
-
 }
 
 /// This trait belongs to any devices with an arbitrary number of "n-way" modes in which

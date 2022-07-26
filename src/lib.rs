@@ -19,6 +19,12 @@ use crate::dock::Dock;
 use crate::energy_storage::EnergyStorage;
 use crate::fan_speed::FanSpeed;
 use crate::fill::Fill;
+use crate::humidity_setting::HumiditySetting;
+use crate::input_selector::InputSelector;
+use crate::light_effects::LightEffects;
+use crate::locator::Locator;
+use crate::lock_unlock::LockUnlock;
+use crate::media_state::MediaState;
 
 pub struct Homelander {
     devices: Vec<Device<dyn GoogleHomeDevice>>
@@ -226,7 +232,7 @@ impl<T: GoogleHomeDevice + Clone + Send + Sync + ?Sized + 'static> Device<T> {
                 if let Some(weight) = fan_speed_relative_weight {
                     device.set_fan_speed_relative_weight(weight)?;
                 } else if let Some(percent) = fan_speed_relative_percent {
-                    device.set_fan_speed_relative_weight(weight)?;
+                    device.set_fan_speed_relative_percent(percent)?;
                 }
             },
             CommandType::Reverse => {
@@ -250,6 +256,80 @@ impl<T: GoogleHomeDevice + Clone + Send + Sync + ?Sized + 'static> Device<T> {
                 } else {
                     device.fill(fill)?;
                 }
+            },
+            CommandType::SetInput { new_input } => {
+                let device = match &mut self.traits.input_selector {
+                    Some(x) => x,
+                    None => panic!("Unsupported")
+                };
+
+                device.set_input(new_input)?;
+            },
+            CommandType::NextInput => {
+                let device = match &mut self.traits.input_selector {
+                    Some(x) => x,
+                    None => panic!("Unsupported")
+                };
+
+                device.set_next_input()?;
+            },
+            CommandType::PreviousInput => {
+                let device = match &mut self.traits.input_selector {
+                    Some(x) => x,
+                    None => panic!("Unsupported")
+                };
+
+                device.set_previous_input()?;
+            },
+            CommandType::ColorLoop { duration } => {
+                let device = match &mut self.traits.light_effects {
+                    Some(x) => x,
+                    None => panic!("Unsupported")
+                };
+
+                device.set_color_loop(duration)?;
+            },
+            CommandType::Sleep { duration } => {
+                let device = match &mut self.traits.light_effects {
+                    Some(x) => x,
+                    None => panic!("Unsupported")
+                };
+
+                device.set_sleep(duration)?;
+            },
+            CommandType::StopEffect => {
+                let device = match &mut self.traits.light_effects {
+                    Some(x) => x,
+                    None => panic!("Unsupported")
+                };
+
+                device.stop_effect()?;
+            },
+            CommandType::Wake { duration } => {
+                let device = match &mut self.traits.light_effects {
+                    Some(x) => x,
+                    None => panic!("Unsupported")
+                };
+
+                device.set_wake(duration)?;
+            },
+            CommandType::Locate { silence, lang } => {
+                let device = match &mut self.traits.locator {
+                    Some(x) => x,
+                    None => panic!("Unsupported")
+                };
+
+                device.locate(Some(silence), Some(lang))?;
+            },
+            CommandType::LockUnlock { lock, follow_up_token } => {
+                let device = match &mut self.traits.lock_unlock {
+                    Some(x) => x,
+                    None => panic!("Unsupported")
+                };
+
+                device.set_locked(lock)?;
+                // TODO how do we handle the response?
+                // https://developers.google.com/assistant/smarthome/traits/lockunlock#action.devices.commands.lockunlock
             }
             _ => {}
         }
@@ -298,6 +378,26 @@ impl<T: GoogleHomeDevice + Clone + Send + Sync + ?Sized + 'static> Device<T> {
 
     pub fn set_fan_speed(&mut self) where T: FanSpeed {
         self.traits.fan_speed = Some(self.inner.clone());
+    }
+
+    pub fn set_input_selector(&mut self) where T: InputSelector {
+        self.traits.input_selector = Some(self.inner.clone());
+    }
+
+    pub fn set_light_effects(&mut self) where T: LightEffects {
+        self.traits.light_effects = Some(self.inner.clone());
+    }
+
+    pub fn set_locator(&mut self) where T: Locator {
+        self.traits.locator = Some(self.inner.clone());
+    }
+
+    pub fn set_lock_unlock(&mut self) where T: LockUnlock {
+        self.traits.lock_unlock = Some(self.inner.clone());
+    }
+
+    pub fn set_media_state(&mut self) where T: MediaState {
+        self.traits.media_state = Some(self.inner.clone());
     }
 }
 

@@ -17,6 +17,8 @@ pub use serializable_error::*;
 use crate::dispense::Dispense;
 use crate::dock::Dock;
 use crate::energy_storage::EnergyStorage;
+use crate::fan_speed::FanSpeed;
+use crate::fill::Fill;
 
 pub struct Homelander {
     devices: Vec<Device<dyn GoogleHomeDevice>>
@@ -202,6 +204,52 @@ impl<T: GoogleHomeDevice + Clone + Send + Sync + ?Sized + 'static> Device<T> {
                 };
 
                 device.charge(charge)?;
+            },
+            CommandType::SetFanSpeed { fan_speed, fan_speed_percent } => {
+                let device = match &mut self.traits.fan_speed {
+                    Some(x) => x,
+                    None => panic!("Unsupported")
+                };
+
+                if let Some(fan_speed) = fan_speed {
+                    device.set_fan_speed_setting(fan_speed)?;
+                } else if let Some(fan_speed_percent) = fan_speed_percent {
+                    device.set_fan_speed_percent(fan_speed_percent)?;
+                }
+            },
+            CommandType::SetFanSpeedRelative { fan_speed_relative_weight, fan_speed_relative_percent } => {
+                let device = match &mut self.traits.fan_speed {
+                    Some(x) => x,
+                    None => panic!("Unsupported")
+                };
+
+                if let Some(weight) = fan_speed_relative_weight {
+                    device.set_fan_speed_relative_weight(weight)?;
+                } else if let Some(percent) = fan_speed_relative_percent {
+                    device.set_fan_speed_relative_weight(weight)?;
+                }
+            },
+            CommandType::Reverse => {
+                let device = match &mut self.traits.fan_speed {
+                    Some(x) => x,
+                    None => panic!("Unsupported")
+                };
+
+                device.set_fan_reverse()?;
+            },
+            CommandType::Fill { fill, fill_level, fill_percent } => {
+                let device = match &mut self.traits.fill {
+                    Some(x) => x,
+                    None => panic!("Unsupported")
+                };
+
+                if let Some(fill_level) = fill_level {
+                    device.fill_to_level(fill_level)?;
+                } else if let Some(fill_percent) = fill_percent {
+                    device.fill_to_percent(fill_percent)?;
+                } else {
+                    device.fill(fill)?;
+                }
             }
             _ => {}
         }
@@ -246,6 +294,10 @@ impl<T: GoogleHomeDevice + Clone + Send + Sync + ?Sized + 'static> Device<T> {
 
     pub fn set_charge(&mut self) where T: EnergyStorage {
         self.traits.energy_storage = Some(self.inner.clone());
+    }
+
+    pub fn set_fan_speed(&mut self) where T: FanSpeed {
+        self.traits.fan_speed = Some(self.inner.clone());
     }
 }
 

@@ -13,6 +13,9 @@ pub mod cook;
 pub mod dispense;
 pub mod dock;
 pub mod energy_storage;
+pub mod fan_speed;
+pub mod fill;
+pub mod humidity_setting;
 
 pub struct DeviceVersion {
     pub hw: String,
@@ -120,22 +123,6 @@ pub trait CameraStream {
 /// This trait belongs to devices that support TV channels on a media device.
 pub trait Channel {
     // TODO
-}
-
-/// This trait belongs to devices that support setting the speed of a fan (that is, blowing air from the device at various levels,
-/// which may be part of an air conditioning or heating unit, or in a car), with settings such as low, medium, and high.
-pub trait FanSpeed {
-
-}
-
-/// This trait applies to devices that support being filled, such as a bathtub.
-pub trait Fill {
-
-}
-
-/// This trait belongs to devices that support humidity settings such as humidifiers and dehumidifiers.
-pub trait HumiditySetting {
-
 }
 
 /// Trait for devices that can change media inputs. These inputs can have dynamic names per device, and may represent audio or video feeds, hardwired or networked.

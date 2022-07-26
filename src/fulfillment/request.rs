@@ -211,7 +211,7 @@ pub mod execute {
             fan_speed: Option<String>,
             /// The requested speed setting percentage.
             #[serde(rename = "fanSpeedPercent")]
-            fan_speed_percent: Option<i32>,
+            fan_speed_percent: Option<f32>,
 
         },
         /// Set relative speed.
@@ -223,8 +223,11 @@ pub mod execute {
             fan_speed_relative_weight: Option<i32>,
             /// This value represents the percentage of speed to change.
             #[serde(rename = "fanSpeedRelativePercent")]
-            fan_speed_relative_percent: Option<i32>,
+            fan_speed_relative_percent: Option<f32>,
         },
+        /// Reverse fan direction.
+        #[serde(rename = "action.devices.commands.Reverse")]
+        Reverse,
         /// Fill or drain the device.
         #[serde(rename = "action.devices.commands.Fill")]
         Fill {
@@ -235,7 +238,7 @@ pub mod execute {
             fill_level: Option<String>,
             /// Indicates the requested level percentage.
             #[serde(rename = "fillPercent")]
-            fill_percent: Option<i32>,
+            fill_percent: Option<f32>,
         },
         /// Set the humidity level to an absolute value.
         #[serde(rename = "action.devices.commands.SetHumidity")]

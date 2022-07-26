@@ -1,6 +1,9 @@
+#![allow(warnings)]
+
 use std::fmt::Debug;
 use crate::traits::*;
 use serde::{Serialize, Deserialize};
+use crate::cook::{Cook, CookingConfig};
 use crate::fulfillment::request::execute::CommandType;
 use crate::traits::arm_disarm::ArmDisarm;
 use crate::traits::brightness::Brightness;
@@ -8,6 +11,10 @@ use crate::traits::color_setting::ColorSetting;
 
 mod traits;
 mod fulfillment;
+mod serializable_error;
+
+pub use serializable_error::*;
+use crate::dispense::Dispense;
 
 pub struct Homelander {
     devices: Vec<Device<dyn GoogleHomeDevice>>
@@ -90,6 +97,7 @@ impl<T: GoogleHomeDevice + Clone + Send + Sync + ?Sized + 'static> Device<T> {
 
     fn execute(&mut self, command: CommandType) -> Result<(), Box<dyn std::error::Error>> {
         match command {
+            // TODO AppSelector
             CommandType::ArmDisarm { arm, cancel, arm_level, ..} => {
                 let device = match &mut self.traits.arm_disarm {
                     Some(x) => x,
@@ -109,17 +117,109 @@ impl<T: GoogleHomeDevice + Clone + Send + Sync + ?Sized + 'static> Device<T> {
                     device.arm(arm)?;
                 }
             },
+            CommandType::BrightnessAbsolute { brightness } => {
+                let device = match &mut self.traits.brightness {
+                    Some(x) => x,
+                    None => panic!("Unsupported")
+                };
+
+                device.set_brightness_absolute(brightness)?;
+            },
+            CommandType::BrightnessRelative { brightness_relative_percent, brightness_relative_weight } => {
+                let device = match &mut self.traits.brightness {
+                    Some(x) => x,
+                    None => panic!("Unsupported")
+                };
+
+                if let Some(brightness_relative_percent) = brightness_relative_percent {
+                    device.set_brightness_relative_percent(brightness_relative_percent)?;
+                }
+
+                if let Some(brightness_relative_weight) = brightness_relative_weight {
+                    device.set_brightness_relative_weight(brightness_relative_weight)?;
+                }
+            },
+            // TODO CameraStream
+            // TODO Channel
+            CommandType::ColorAbsolute { color } => {
+                let device = match &mut self.traits.color_setting {
+                    Some(x) => x,
+                    None => panic!("Unsupported")
+                };
+
+                device.set_color(color)?;
+            },
+            CommandType::Cook { start, cooking_mode, food_preset, quantity, unit } => {
+                let device = match &mut self.traits.cook {
+                    Some(x) => x,
+                    None => panic!("Unsupported")
+                };
+
+                if start {
+                    device.start(CookingConfig {
+                        cooking_mode,
+                        food_preset,
+                        quantity,
+                        unit,
+                    })?;
+                } else {
+                    device.stop()?;
+                }
+            },
+            CommandType::Dispense { item, amount, unit, preset_name } => {
+                let device = match &mut self.traits.dispense {
+                    Some(x) => x,
+                    None => panic!("Unsupported")
+                };
+
+                if let Some(item) = item {
+                    // Unwraps are safe, specified in Google spec.
+                    // https://developers.google.com/assistant/smarthome/traits/dispense#device-commands
+                    let unit = unit.unwrap();
+                    let amount = amount.unwrap();
+
+                    device.dispense_amount(item, amount, unit)?;
+                } else if let Some(preset_name) = preset_name {
+                    device.dispense_preset(preset_name)?;
+                } else {
+                    device.dispense_default()?;
+                }
+            }
             _ => {}
         }
         Ok(())
     }
 
     pub fn set_app_selector(&mut self) where T: AppSelector {
-        self.traits.app_selector = Some(self.inner.clone() as Box<dyn AppSelector>);
+        todo!()
     }
 
     pub fn set_arm_disarm(&mut self) where T: ArmDisarm {
-        self.traits.arm_disarm = Some(self.inner.clone() as Box<dyn ArmDisarm>);
+        self.traits.arm_disarm = Some(self.inner.clone());
+    }
+
+    pub fn set_brightness(&mut self) where T: Brightness {
+        self.traits.brightness = Some(self.inner.clone());
+    }
+
+    pub fn set_camera_stream(&mut self) where T: CameraStream {
+        todo!();
+    }
+
+    pub fn set_channel(&mut self) where T: Channel {
+        todo!();
+    }
+
+    pub fn set_color_setting(&mut self) where T: ColorSetting {
+        self.traits.color_setting = Some(self.inner.clone());
+    }
+
+    pub fn set_cook(&mut self) where T: Cook {
+        self.traits.cook = Some(self.inner.clone());
+    }
+
+    pub fn set_dispense(&mut self) where T: Dispense {
+        self.traits.dispense = Some(self.inner.clone());
     }
 }
 

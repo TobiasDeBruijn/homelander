@@ -1,11 +1,16 @@
+use std::any::TypeId;
 use std::error::Error;
+use std::fmt;
+use std::fmt::{Debug, Formatter};
 use thiserror::Error;
-use serde::{Serialize, Deserialize};
+use serde::{Serialize, Deserialize, Serializer};
 use crate::Trait;
 
 pub mod arm_disarm;
 pub mod brightness;
 pub mod color_setting;
+pub mod cook;
+pub mod dispense;
 
 pub struct DeviceVersion {
     pub hw: String,
@@ -17,26 +22,26 @@ pub trait GoogleHomeDevice {
     fn get_name(&self) -> String;
 }
 
-#[derive(Debug, Error)]
+#[derive(Debug, Serialize, Error)]
 pub enum DeviceError {
     // Todo
     // https://developers.google.com/assistant/smarthome/reference/errors-exceptions#error_list
 }
 
-#[derive(Debug, Error)]
+#[derive(Debug, Serialize, Error)]
 pub enum DeviceException {
     // Todo
     // https://developers.google.com/assistant/smarthome/reference/errors-exceptions#exception_list
 }
 
-#[derive(Debug, Error)]
+#[derive(Debug, Serialize, Error)]
 pub enum CombinedDeviceError {
     #[error("{0}")]
     DeviceError(DeviceError),
     #[error("{0}")]
     DeviceException(DeviceException),
     #[error("{0}")]
-    Other(Box<dyn Error>)
+    Other(#[from] crate::SerializableError)
 }
 
 #[derive(Debug, PartialEq, Eq, Deserialize, Serialize)]
@@ -59,9 +64,47 @@ pub enum Language {
     Chinese
 }
 
+#[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+pub enum SizeUnit {
+    UnknownUnits,
+    NoUnits,
+    Centimeters,
+    Cups,
+    Deciliters,
+    Feet,
+    FluidOunces,
+    Gallons,
+    Grams,
+    Inches,
+    Kilograms,
+    Liters,
+    Meters,
+    Milligrams,
+    Milliliters,
+    Millimeters,
+    Ounces,
+    Pinch,
+    Pints,
+    Portion,
+    Pounds,
+    Quarts,
+    Tablespoons,
+    Teaspoons,
+}
+
+/// Name synonyms in each supported language.
+#[derive(Debug, Serialize)]
+pub struct Synonym {
+    /// Synonyms for the preset, should include both singular and plural forms, if applicable.
+    pub synonym: Vec<String>,
+    /// Language code
+    pub lang: Language,
+}
+
 /// This trait belongs to devices that support media applications, typically from third parties.
 pub trait AppSelector {
-
+    // TODO
 }
 
 /// This trait belongs to devices which have the capability to stream video feeds to third party screens,
@@ -69,24 +112,12 @@ pub trait AppSelector {
 /// But this trait also applies to more complex devices which have a camera on them
 /// (for example, video-conferencing devices or a vacuum robot with a camera on it).
 pub trait CameraStream {
-
+    // TODO
 }
 
 /// This trait belongs to devices that support TV channels on a media device.
 pub trait Channel {
-
-}
-
-/// This trait belongs to devices that can cook food according to various food presets and supported cooking modes.
-pub trait Cook {
-
-}
-
-/// This trait belongs to devices that support dispensing a specified amount of one or more physical items.
-/// For example, a dog treat dispenser may dispense a number of treats,
-/// a faucet may dispense cups of water, and a pet feeder may dispense both water and pet food.
-pub trait Dispense {
-
+    // TODO
 }
 
 /// This trait is designed for self-mobile devices that can be commanded to return for charging.

@@ -15,6 +15,8 @@ mod serializable_error;
 
 pub use serializable_error::*;
 use crate::dispense::Dispense;
+use crate::dock::Dock;
+use crate::energy_storage::EnergyStorage;
 
 pub struct Homelander {
     devices: Vec<Device<dyn GoogleHomeDevice>>
@@ -184,6 +186,22 @@ impl<T: GoogleHomeDevice + Clone + Send + Sync + ?Sized + 'static> Device<T> {
                 } else {
                     device.dispense_default()?;
                 }
+            },
+            CommandType::Dock => {
+                let device = match &mut self.traits.dock {
+                    Some(x) => x,
+                    None => panic!("Unsupported")
+                };
+
+                device.dock()?;
+            },
+            CommandType::Charge { charge} => {
+                let device = match &mut self.traits.energy_storage {
+                    Some(x) => x,
+                    None => panic!("Unsupported")
+                };
+
+                device.charge(charge)?;
             }
             _ => {}
         }
@@ -220,6 +238,14 @@ impl<T: GoogleHomeDevice + Clone + Send + Sync + ?Sized + 'static> Device<T> {
 
     pub fn set_dispense(&mut self) where T: Dispense {
         self.traits.dispense = Some(self.inner.clone());
+    }
+
+    pub fn set_dock(&mut self) where T: Dock {
+        self.traits.dock = Some(self.inner.clone());
+    }
+
+    pub fn set_charge(&mut self) where T: EnergyStorage {
+        self.traits.energy_storage = Some(self.inner.clone());
     }
 }
 

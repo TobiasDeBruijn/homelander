@@ -11,6 +11,8 @@ pub mod brightness;
 pub mod color_setting;
 pub mod cook;
 pub mod dispense;
+pub mod dock;
+pub mod energy_storage;
 
 pub struct DeviceVersion {
     pub hw: String,
@@ -118,18 +120,6 @@ pub trait CameraStream {
 /// This trait belongs to devices that support TV channels on a media device.
 pub trait Channel {
     // TODO
-}
-
-/// This trait is designed for self-mobile devices that can be commanded to return for charging.
-pub trait Dock {
-
-}
-
-/// This trait belongs to devices that can store energy in a battery and potentially recharge, or devices that can charge another device.
-/// The trait supports starting and stopping charging, and checking the current charge level,
-/// capacity remaining, and capacity until full values.
-pub trait EnergyStorage {
-
 }
 
 /// This trait belongs to devices that support setting the speed of a fan (that is, blowing air from the device at various levels,

@@ -6,6 +6,8 @@ edition = "2021"
 [dependencies]
 thiserror = "1.0.31"
 tracing = "0.1.35"
+strum_macros = "0.24.2"
+convert_case = "0.5.0"
 
 [dependencies.serde]
 version = "1.0"

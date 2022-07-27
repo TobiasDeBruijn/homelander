@@ -1,9 +1,19 @@
 use serde::{Serialize, Serializer};
 use std::fmt;
 use std::error::Error;
+use crate::CombinedDeviceError;
 
 pub trait ToStringError: Error + ToString {}
-pub struct SerializableError(Box<dyn ToStringError>);
+
+impl<T: Error + ToString> ToStringError for T {}
+
+pub struct SerializableError(pub(crate) Box<dyn ToStringError>);
+
+impl From<CombinedDeviceError> for SerializableError {
+    fn from(x: CombinedDeviceError) -> Self {
+        Self(x as Box<dyn ToStringError>)
+    }
+}
 
 impl Serialize for SerializableError {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>

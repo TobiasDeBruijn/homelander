@@ -1,7 +1,10 @@
 use crate::traits::{DeviceError, DeviceException, Language};
 use thiserror::Error;
 use std::error::Error;
+use convert_case::{Case, Casing};
 use serde::{Serialize, Deserialize};
+use strum_macros::AsRefStr;
+use crate::{CombinedDeviceError, SerializableError};
 
 /// Security level.
 #[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -23,26 +26,22 @@ pub struct LevelValue {
 /// An error occurred arming or disarming the device.
 #[derive(Debug, Error)]
 pub enum ArmDisarmError {
-    #[error("AlreadyInState")]
+    #[error("alreadyInState")]
     AlreadyInState,
-    #[error("DeviceTampered")]
+    #[error("deviceTampered")]
     DeviceTampered,
-    #[error("PassphraseIncorrect")]
+    #[error("passphraseIncorrect")]
     PassphraseIncorrect,
-    #[error("PinIncorrect")]
+    #[error("pinIncorrect")]
     PinIncorrect,
-    #[error("SecurityRestrictions")]
+    #[error("securityRestrictions")]
     SecurityRestrictions,
-    #[error("TooManyFailedAttempts")]
+    #[error("tooManyFailedAttempts")]
     TooManyFailedAttempts,
-    #[error("UserCancelled")]
+    #[error("userCancelled")]
     UserCancelled,
     #[error("{0}")]
-    DeviceError(DeviceError),
-    #[error("{0}")]
-    DeviceException(DeviceException),
-    #[error("{0}")]
-    Other(Box<dyn std::error::Error>),
+    Other(CombinedDeviceError),
 }
 
 /// This trait supports arming and disarming as used in, for example, security systems.

@@ -1,10 +1,9 @@
 use std::any::TypeId;
 use std::error::Error;
-use std::fmt;
+use std::{clone, fmt};
 use std::fmt::{Debug, Formatter};
 use thiserror::Error;
 use serde::{Serialize, Deserialize, Serializer};
-use crate::Trait;
 
 pub mod arm_disarm;
 pub mod brightness;
@@ -23,15 +22,31 @@ pub mod lock_unlock;
 pub mod media_state;
 pub mod modes;
 pub mod network_control;
+pub mod on_off;
 
-pub struct DeviceVersion {
+pub struct DeviceInfo {
+    pub model: String,
+    pub manufacturer: String,
     pub hw: String,
     pub sw: String,
 }
 
+pub struct DeviceName {
+    pub default_names: Vec<String>,
+    pub name: String,
+    pub nicknames: Vec<String>,
+}
+
 pub trait GoogleHomeDevice {
-    fn get_version(&self) -> DeviceVersion;
-    fn get_name(&self) -> String;
+    fn get_device_info(&self) -> DeviceInfo;
+
+    fn get_room_hint(&self) -> Option<String> {
+        None
+    }
+
+    fn will_report_state(&self) -> bool;
+
+    fn get_device_name(&self) -> DeviceName;
 }
 
 #[derive(Debug, Serialize, Error)]
@@ -56,7 +71,7 @@ pub enum CombinedDeviceError {
     Other(#[from] crate::SerializableError)
 }
 
-#[derive(Debug, PartialEq, Eq, Deserialize, Serialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
 pub enum Language {
     Danish,
     Dutch,
@@ -76,7 +91,7 @@ pub enum Language {
     Chinese
 }
 
-#[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum SizeUnit {
     UnknownUnits,
@@ -136,12 +151,7 @@ pub trait Channel {
 /// For example, it can be used for doorbells to indicate that a person (named or unnamed) rang the doorbell,
 /// as well as for cameras and sensors that can detect movement of objects or people approaching.
 pub trait ObjectDetection {
-
-}
-
-/// The basic on and off functionality for any device that has binary on and off, including plugs and switches as well as many future devices.
-pub trait OnOff {
-
+    // TODO
 }
 
 /// This trait belongs to devices that support opening and closing,

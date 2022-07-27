@@ -44,7 +44,7 @@ pub struct Color {
 }
 
 /// Coloor to set
-#[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ColorCommand {
     /// Temperature value in Kelvin
     #[serde(rename = "temperature")]
@@ -57,7 +57,7 @@ pub enum ColorCommand {
     SpectrumHsv(SpectrumHsv),
 }
 
-#[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct SpectrumHsv {
     pub hue: i32,
     pub saturation: i32,

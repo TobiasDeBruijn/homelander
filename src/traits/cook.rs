@@ -2,7 +2,7 @@ use serde::{Serialize, Deserialize};
 use crate::{CombinedDeviceError, Language, SizeUnit, Synonym};
 use thiserror::Error;
 
-#[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum CookingMode {
     None,

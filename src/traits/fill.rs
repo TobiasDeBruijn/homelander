@@ -1,5 +1,6 @@
 use serde::{Serialize, Deserialize};
-use crate::{CombinedDeviceError, Language};
+use crate::{CombinedDeviceError};
+use crate::traits::Language;
 
 /// Describes different levels of filling the device.
 #[derive(Debug, Serialize)]

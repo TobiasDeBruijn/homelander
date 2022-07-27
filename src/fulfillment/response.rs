@@ -68,10 +68,14 @@ pub mod execute {
     #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
     pub enum CommandStatus {
         Success,
+        Pending,
+        Offline,
+        Exceptions,
         Error,
     }
 
     #[derive(Debug, Serialize)]
+    #[serde(rename_all = "camelCase")]
     pub struct Command {
         pub ids: Vec<String>,
         pub status: CommandStatus,
@@ -79,8 +83,10 @@ pub mod execute {
         pub error_code: Option<SerializableError>,
     }
 
-    #[derive(Debug, Serialize)]
+    #[derive(Debug, Default, Serialize)]
+    #[serde(rename_all = "camelCase")]
     pub struct CommandState {
-
+        pub lock: Option<bool>,
+        pub guest_network_password: Option<String>
     }
 }

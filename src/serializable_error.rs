@@ -3,17 +3,11 @@ use std::fmt;
 use std::error::Error;
 use crate::CombinedDeviceError;
 
-pub trait ToStringError: Error + ToString {}
+pub trait ToStringError: Error + ToString + 'static where {}
 
-impl<T: Error + ToString> ToStringError for T {}
+impl<T: Error + ToString + 'static> ToStringError for T {}
 
 pub struct SerializableError(pub(crate) Box<dyn ToStringError>);
-
-impl From<CombinedDeviceError> for SerializableError {
-    fn from(x: CombinedDeviceError) -> Self {
-        Self(x as Box<dyn ToStringError>)
-    }
-}
 
 impl Serialize for SerializableError {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>

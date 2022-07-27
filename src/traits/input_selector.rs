@@ -1,6 +1,7 @@
 use serde::{Serialize, Deserialize};
 use thiserror::Error;
-use crate::{CombinedDeviceError, Language};
+use crate::{CombinedDeviceError};
+use crate::traits::Language;
 
 #[derive(Debug, Error, Serialize)]
 #[serde(rename_all = "camelCase")]

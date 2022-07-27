@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 use serde::{Serialize, Deserialize};
-use crate::{CombinedDeviceError, Language};
+use crate::{CombinedDeviceError};
+use crate::traits::Language;
 
 /// Available mode.
 #[derive(Debug, Serialize)]

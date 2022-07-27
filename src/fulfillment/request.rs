@@ -23,9 +23,9 @@ pub mod query {
 pub mod execute {
     use std::collections::HashMap;
     use serde::Deserialize;
-    use crate::cook::CookingMode;
-    use crate::{Language, SizeUnit};
     use crate::traits::color_setting::ColorCommand;
+    use crate::traits::cook::CookingMode;
+    use crate::traits::{Language, SizeUnit};
 
     #[derive(Debug, PartialEq, Deserialize)]
     pub struct Execute {

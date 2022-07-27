@@ -1,6 +1,7 @@
 use serde::{Serialize, Deserialize};
-use crate::{CombinedDeviceError, Language, SizeUnit, Synonym};
+use crate::traits::{Language, SizeUnit, Synonym};
 use thiserror::Error;
+use crate::CombinedDeviceError;
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]

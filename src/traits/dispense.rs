@@ -1,6 +1,7 @@
 use serde::{Serialize, Deserialize};
-use crate::{CombinedDeviceError, SizeUnit, Synonym};
 use thiserror::Error;
+use crate::CombinedDeviceError;
+use crate::traits::{SizeUnit, Synonym};
 
 #[derive(Debug, Serialize)]
 pub struct DispenseItem {

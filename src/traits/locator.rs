@@ -1,5 +1,6 @@
 use serde::{Serialize, Deserialize};
-use crate::{CombinedDeviceError, Language};
+use crate::{CombinedDeviceError};
+use crate::traits::Language;
 
 /// This trait is used for devices that can be "found". This includes phones,
 /// robots (including vacuums and mowers), drones, and tag-specific products that attach to other devices.

@@ -97,6 +97,7 @@ pub mod query {
 }
 
 pub mod execute {
+    use std::collections::HashMap;
     use serde::Deserialize;
     use crate::cook::CookingMode;
     use crate::{Language, SizeUnit};
@@ -311,5 +312,42 @@ pub mod execute {
             #[serde(rename = "followUpToken")]
             follow_up_token: String,
         },
+        /// Update mode settings.
+        #[serde(rename = "action.devices.commands.SetModes")]
+        SetModes {
+            /// Key/value pair with the mode name of the device as the key, and the new setting_name as the value.
+            #[serde(rename = "updateModeSettings")]
+            update_mode_settings: HashMap<String, String>
+        },
+        /// Enable or disable the guest network.
+        #[serde(rename = "action.devices.commands.EnableDisableGuestNetwork")]
+        EnableDisableGuestNetwork {
+            /// True to enable the guest network, false to disable the guest network.
+            enable: bool,
+        },
+        /// Enable or disable a network profile.
+        #[serde(rename = "action.devices.commands.EnableDisableNetworkProfile")]
+        EnableDisableNetworkProfile {
+            /// The profile name from networkProfiles attribute.
+            profile: String,
+            /// True to enable the profile, false to disable the profile.
+            enable: bool,
+        },
+        /// Get the guest network password.
+        #[serde(rename = "action.devices.commands.GetGuestNetworkPassword")]
+        GetGuestNetworkPassword,
+        /// Test the network download and upload speed.
+        #[serde(rename = "action.devices.commands.TestNetworkSpeed")]
+        TestNetworkSpeed {
+            /// Indicates whether the download speed should be tested.
+            #[serde(rename = "testDownloadSpeed")]
+            test_download_speed: bool,
+            /// Indicates whether the upload speed should be tested.
+            #[serde(rename = "testUploadSpeed")]
+            test_upload_speed: bool,
+            /// Google-provided token for follow-up response.
+            #[serde(rename = "followUpToken")]
+            follow_up_token: String,
+        }
     }
 }

@@ -21,6 +21,8 @@ pub mod light_effects;
 pub mod locator;
 pub mod lock_unlock;
 pub mod media_state;
+pub mod modes;
+pub mod network_control;
 
 pub struct DeviceVersion {
     pub hw: String,
@@ -128,20 +130,6 @@ pub trait CameraStream {
 /// This trait belongs to devices that support TV channels on a media device.
 pub trait Channel {
     // TODO
-}
-
-/// This trait belongs to any devices with an arbitrary number of "n-way" modes in which
-/// the modes and settings for each mode are arbitrary and unique to each device or device type.
-/// Each mode has multiple possible settings,
-/// but only one can be selected at a time; a dryer cannot be in "delicate," "normal," and
-/// "heavy duty" mode simultaneously. A setting that simply can be turned on or off belongs in the [Toggles] trait.
-pub trait Modes {
-
-}
-
-/// This trait belongs to devices that support reporting network data and performing network specific operations.
-pub trait NetworkControl {
-
 }
 
 /// This trait belongs to devices that can detect objects or people and send a notification to the user.

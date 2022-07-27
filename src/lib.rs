@@ -25,6 +25,8 @@ use crate::light_effects::LightEffects;
 use crate::locator::Locator;
 use crate::lock_unlock::LockUnlock;
 use crate::media_state::MediaState;
+use crate::modes::Modes;
+use crate::network_control::NetworkControl;
 
 pub struct Homelander {
     devices: Vec<Device<dyn GoogleHomeDevice>>
@@ -330,6 +332,49 @@ impl<T: GoogleHomeDevice + Clone + Send + Sync + ?Sized + 'static> Device<T> {
                 device.set_locked(lock)?;
                 // TODO how do we handle the response?
                 // https://developers.google.com/assistant/smarthome/traits/lockunlock#action.devices.commands.lockunlock
+            },
+            CommandType::SetModes { update_mode_settings } => {
+                let device = match &mut self.traits.modes {
+                    Some(x) => x,
+                    None => panic!("Unsupported")
+                };
+
+                for (mode_name, setting_name) in update_mode_settings {
+                    device.update_mode(mode_name, setting_name)?;
+                }
+            },
+            CommandType::EnableDisableGuestNetwork { enable } => {
+                let device = match &mut self.traits.network_control {
+                    Some(x) => x,
+                    None => panic!("Unsupported")
+                };
+
+                device.set_guest_network_enabled(enable)?;
+            },
+            CommandType::EnableDisableNetworkProfile { enable, profile } => {
+                let device = match &mut self.traits.network_control {
+                    Some(x) => x,
+                    None => panic!("Unsupported")
+                };
+
+                device.set_network_profile_enabled(profile, enable)?;
+            },
+            CommandType::GetGuestNetworkPassword => {
+                let device = match &mut self.traits.network_control {
+                    Some(x) => x,
+                    None => panic!("Unsupported")
+                };
+
+                let password = device.get_guest_network_password()?;
+                // TODO handle response
+            },
+            CommandType::TestNetworkSpeed { test_upload_speed, test_download_speed, .. } => {
+                let device = match &mut self.traits.network_control {
+                    Some(x) => x,
+                    None => panic!("Unsupported")
+                };
+
+                device.test_network_speed(test_download_speed, test_upload_speed)?;
             }
             _ => {}
         }
@@ -398,6 +443,14 @@ impl<T: GoogleHomeDevice + Clone + Send + Sync + ?Sized + 'static> Device<T> {
 
     pub fn set_media_state(&mut self) where T: MediaState {
         self.traits.media_state = Some(self.inner.clone());
+    }
+
+    pub fn set_modes(&mut self) where T: Modes {
+        self.traits.modes = Some(self.inner.clone());
+    }
+
+    pub fn set_network_control(&mut self) where T: NetworkControl {
+        self.traits.network_control = Some(self.inner.clone());
     }
 }
 

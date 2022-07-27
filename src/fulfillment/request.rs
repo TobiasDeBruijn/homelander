@@ -288,7 +288,7 @@ mod test {
 
     #[test]
     fn test_execute_payload() {
-        use crate::fulfillment::request::execute::{Command, Execute, Device, CommandType};
+        use crate::fulfillment::request::execute::{Command, Execute, Device};
 
         let payload = r#"
             {

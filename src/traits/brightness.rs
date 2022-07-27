@@ -1,6 +1,4 @@
 use crate::traits::CombinedDeviceError;
-use std::error::Error;
-use thiserror::Error;
 
 /// Absolute brightness setting is in a normalized range from 0 to 100
 /// (individual lights may not support every point in the range based on their LED configuration).

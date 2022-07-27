@@ -1,4 +1,4 @@
-use serde::{Serialize, Deserialize};
+use serde::Serialize;
 use crate::CombinedDeviceError;
 use thiserror::Error;
 
@@ -23,15 +23,6 @@ pub enum LockUnlockError {
     Device(DeviceError),
     #[error("{0}")]
     Other(CombinedDeviceError)
-}
-
-#[derive(Debug, Serialize)]
-#[serde(rename_all = "camelCase")]
-pub(crate) struct LockUnlockResponse {
-    follow_up_token: String,
-    status: String,
-    is_locked: String,
-    error_code: String,
 }
 
 /// This trait belongs to any devices that support locking and unlocking, and/or reporting a locked state.

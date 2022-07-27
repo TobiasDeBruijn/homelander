@@ -1,10 +1,7 @@
-use crate::traits::{DeviceError, DeviceException, Language};
+use crate::traits::Language;
 use thiserror::Error;
-use std::error::Error;
-use convert_case::{Case, Casing};
 use serde::{Serialize, Deserialize};
-use strum_macros::AsRefStr;
-use crate::{CombinedDeviceError, SerializableError};
+use crate::CombinedDeviceError;
 
 /// Security level.
 #[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]

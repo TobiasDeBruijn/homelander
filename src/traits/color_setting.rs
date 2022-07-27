@@ -1,4 +1,3 @@
-use std::error::Error;
 use crate::traits::CombinedDeviceError;
 use serde::{Serialize, Deserialize};
 

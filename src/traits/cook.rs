@@ -1,5 +1,5 @@
 use serde::{Serialize, Deserialize};
-use crate::traits::{Language, SizeUnit, Synonym};
+use crate::traits::{SizeUnit, Synonym};
 use thiserror::Error;
 use crate::CombinedDeviceError;
 

@@ -1,4 +1,4 @@
-use serde::{Serialize, Deserialize};
+use serde::Serialize;
 use thiserror::Error;
 use crate::{CombinedDeviceError};
 use crate::traits::Language;
@@ -23,18 +23,18 @@ pub enum InputSelectorError {
 #[derive(Debug, Serialize)]
 pub struct AvailableInput {
     /// Unique key for the input. The key should not be exposed to users in speech or response.
-    key: String,
+    pub key: String,
     /// List of names for the input for all available languages.
-    names: Vec<InputName>,
+    pub names: Vec<InputName>,
 }
 
 /// Input for a given available language.
 #[derive(Debug, Serialize)]
 pub struct InputName {
     /// Language code.
-    lang: Language,
+    pub lang: Language,
     /// User-friendly names for the input, in a given language. The first synonym is used in Google Assistant's response to the user.
-    name_synonym: Vec<String>,
+    pub name_synonym: Vec<String>,
 }
 
 /// Trait for devices that can change media inputs. These inputs can have dynamic names per device, and may represent audio or video feeds, hardwired or networked.

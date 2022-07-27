@@ -1,7 +1,6 @@
 use serde::{Serialize, Serializer};
 use std::fmt;
 use std::error::Error;
-use crate::CombinedDeviceError;
 
 pub trait ToStringError: Error + ToString + 'static where {}
 

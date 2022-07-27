@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use serde::{Serialize, Deserialize};
+use serde::Serialize;
 use thiserror::Error;
 use crate::CombinedDeviceError;
 

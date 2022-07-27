@@ -1,6 +1,4 @@
-use serde::{Serialize, Deserialize};
 use crate::CombinedDeviceError;
-
 
 /// The basic on and off functionality for any device that has binary on and off, including plugs and switches as well as many future devices.
 ///

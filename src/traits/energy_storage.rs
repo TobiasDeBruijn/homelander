@@ -1,4 +1,4 @@
-use serde::{Serialize, Deserialize};
+use serde::Serialize;
 use thiserror::Error;
 use crate::CombinedDeviceError;
 
@@ -47,9 +47,9 @@ pub enum CapacityUnit {
 
 pub struct CapacityValue {
     /// The capacity value.
-    raw_value: i32,
+    pub raw_value: i32,
     /// The capacity unit.
-    unit: CapacityUnit
+    pub unit: CapacityUnit
 }
 
 /// This trait belongs to devices that can store energy in a battery and potentially recharge, or devices that can charge another device.

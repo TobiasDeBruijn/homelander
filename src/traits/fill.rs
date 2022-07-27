@@ -1,4 +1,4 @@
-use serde::{Serialize, Deserialize};
+use serde::Serialize;
 use crate::{CombinedDeviceError};
 use crate::traits::Language;
 
@@ -6,29 +6,29 @@ use crate::traits::Language;
 #[derive(Debug, Serialize)]
 pub struct AvailableFillLevels {
     /// List of level names and language-specific synonyms.
-    levels: Vec<FillLevel>,
+    pub levels: Vec<FillLevel>,
     /// If true, the device handles additional grammar for increase or decrease logic, as represented by the levels array (for example, half level).
-    ordered: bool,
+    pub ordered: bool,
     /// If true, accept commands for adjusting the level to a percentage.
-    supports_fill_percent: bool,
+    pub supports_fill_percent: bool,
 }
 
 /// Level name and its language-specific synonyms.
 #[derive(Debug, Serialize)]
 pub struct FillLevel {
     /// Internal name of the level. This can be non-user-friendly, and will be shared across all languages.
-    level_name: String,
+    pub level_name: String,
     /// Synonyms of the level in each supported language.
-    level_values: Vec<LevelValue>,
+    pub level_values: Vec<LevelValue>,
 }
 
 /// Synonyms of the level in a given language.
 #[derive(Debug, Serialize)]
 pub struct LevelValue {
     /// Synonym of the level. The first string in this list is used as the canonical name of the level in that language.
-    level_synonym: Vec<String>,
+    pub level_synonym: Vec<String>,
     /// Language code
-    lang: Language
+    pub lang: Language
 }
 
 

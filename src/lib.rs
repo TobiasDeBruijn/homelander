@@ -1,17 +1,9 @@
-#![allow(warnings)]
-
-use std::collections::HashMap;
-use std::error::Error;
-use std::fmt::Debug;
-use std::process::Output;
-use serde::{Serialize, Deserialize};
 use crate::fulfillment::request::execute::CommandType;
 use crate::traits::arm_disarm::ArmDisarm;
 use crate::traits::brightness::Brightness;
 use crate::traits::color_setting::ColorSetting;
-use thiserror::Error;
 
-mod traits;
+pub mod traits;
 mod fulfillment;
 mod serializable_error;
 mod device_type;
@@ -36,8 +28,6 @@ struct CommandOutput {
     state: Option<crate::fulfillment::response::execute::CommandState>,
     error: Option<SerializableError>,
 }
-
-type BoxResult<T> = Result<T, Box<dyn Error>>;
 
 impl<T: GoogleHomeDevice + Clone + Send + Sync + 'static> Homelander<T> {
     pub fn add_device(&mut self, device: Device<T>) {
@@ -193,7 +183,7 @@ mod test {
                 Ok(0)
             }
 
-            fn arm(&mut self, arm: bool) -> Result<(), ArmDisarmError> {
+            fn arm(&mut self, _arm: bool) -> Result<(), ArmDisarmError> {
                 Ok(())
             }
 
@@ -201,7 +191,7 @@ mod test {
                 Ok(())
             }
 
-            fn arm_with_level(&mut self, arm: bool, level: String) -> Result<(), ArmDisarmError> {
+            fn arm_with_level(&mut self, _arm: bool, _level: String) -> Result<(), ArmDisarmError> {
                 Ok(())
             }
         }

@@ -78,7 +78,7 @@ impl<T: GoogleHomeDevice + Clone + Send + Sync + ?Sized + 'static> Device<T> {
                     state: None,
                     error: Some(SerializableError(e))
                 },
-                ExecuteError::Server(e) => CommandOutput {
+                ExecuteError::Server(_) => CommandOutput { // TODO: maybe print the error?
                     id: self.id.clone(),
                     status: CommandStatus::Offline,
                     state: None,
@@ -305,7 +305,7 @@ impl<T: GoogleHomeDevice + Clone + Send + Sync + ?Sized + 'static> Device<T> {
 
                 device.locate(Some(silence), Some(lang))?;
             },
-            CommandType::LockUnlock { lock, follow_up_token } => {
+            CommandType::LockUnlock { lock, .. } => {
                 let device = match &mut self.device_traits.lock_unlock {
                     Some(x) => x,
                     None => panic!("Unsupported")
@@ -464,6 +464,7 @@ impl<T: GoogleHomeDevice + Clone + Send + Sync + ?Sized + 'static> Device<T> {
     }
 }
 
+#[allow(unused)]
 #[derive(Default)]
 pub struct DeviceTraits {
     app_selector: Option<Box<dyn AppSelector>>,

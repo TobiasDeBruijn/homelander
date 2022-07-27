@@ -1,4 +1,3 @@
-use serde::{Serialize, Deserialize};
 use crate::CombinedDeviceError;
 
 /// This trait is designed for self-mobile devices that can be commanded to return for charging.

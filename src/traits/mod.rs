@@ -1,9 +1,6 @@
-use std::any::TypeId;
-use std::error::Error;
-use std::{clone, fmt};
-use std::fmt::{Debug, Formatter};
+use std::fmt::Debug;
 use thiserror::Error;
-use serde::{Serialize, Deserialize, Serializer};
+use serde::{Serialize, Deserialize};
 
 pub mod arm_disarm;
 pub mod brightness;

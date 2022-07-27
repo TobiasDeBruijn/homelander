@@ -1,4 +1,4 @@
-use serde::{Serialize, Deserialize};
+use serde::Serialize;
 use crate::CombinedDeviceError;
 
 /// Supported light effect.

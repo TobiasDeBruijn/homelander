@@ -1,4 +1,4 @@
-use serde::{Serialize, Deserialize};
+use serde::Serialize;
 use thiserror::Error;
 use crate::{CombinedDeviceError};
 use crate::traits::Language;
@@ -25,9 +25,9 @@ pub enum FanSpeedError {
 /// Speed settings supported by the device.
 pub struct AvailableFanSpeeds {
     /// If set to true, additional grammar for increase or decrease logic will apply, in the order (increasing) of the speeds array.
-    speeds: Vec<FanSpeedItem>,
+    pub speeds: Vec<FanSpeedItem>,
     /// If set to true, additional grammar for increase or decrease logic will apply, in the order (increasing) of the speeds array.
-    ordered: bool,
+    pub ordered: bool,
 }
 
 /// Speed setting.

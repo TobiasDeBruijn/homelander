@@ -2,6 +2,7 @@ use convert_case::{Case, Casing};
 use serde::Serialize;
 use strum_macros::AsRefStr;
 
+#[non_exhaustive]
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, AsRefStr)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum DeviceType {

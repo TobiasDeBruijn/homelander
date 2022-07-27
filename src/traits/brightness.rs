@@ -3,7 +3,6 @@ use crate::traits::CombinedDeviceError;
 /// Absolute brightness setting is in a normalized range from 0 to 100
 /// (individual lights may not support every point in the range based on their LED configuration).
 pub trait Brightness {
-
     /// Indicates if the device supports using one-way (true) or two-way (false) communication.
     /// Set this attribute to true if the device cannot respond to a QUERY intent or Report State for this trait.
     fn is_command_only_brightness(&self) -> Result<bool, CombinedDeviceError>;

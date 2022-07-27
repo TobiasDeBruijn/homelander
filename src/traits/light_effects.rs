@@ -1,5 +1,5 @@
-use serde::Serialize;
 use crate::CombinedDeviceError;
+use serde::Serialize;
 
 /// Supported light effect.
 #[derive(Debug, Serialize)]

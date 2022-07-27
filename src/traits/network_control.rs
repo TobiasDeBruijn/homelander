@@ -1,7 +1,7 @@
-use std::collections::HashMap;
-use serde::Serialize;
-use thiserror::Error;
 use crate::CombinedDeviceError;
+use serde::Serialize;
+use std::collections::HashMap;
+use thiserror::Error;
 
 #[derive(Debug, Error, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -32,7 +32,7 @@ pub struct NetworkSettings {
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum SpeedTestStatus {
     Success,
-    Failure
+    Failure,
 }
 
 /// Contains the results of the most recent network download speed test.
@@ -56,7 +56,7 @@ pub struct UploadSpeedTestResult {
     /// The Unix timestamp (number of seconds since the Unix Epoch) of when the last network upload speed test was run.
     pub unix_timestamp_sec: i64,
     /// Indicates whether the last network upload speed test succeeded or failed.
-    pub status: SpeedTestStatus
+    pub status: SpeedTestStatus,
 }
 
 /// An object storing the state of an individual network profile.
@@ -64,7 +64,7 @@ pub struct UploadSpeedTestResult {
 #[derive(Debug, Serialize)]
 pub struct NetworkProfileState {
     /// The current enabled/disabled state of the network profile.
-    pub enabled: bool
+    pub enabled: bool,
 }
 
 /// This trait belongs to devices that support reporting network data and performing network specific operations.

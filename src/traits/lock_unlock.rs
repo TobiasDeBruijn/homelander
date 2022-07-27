@@ -1,5 +1,5 @@
-use serde::Serialize;
 use crate::CombinedDeviceError;
+use serde::Serialize;
 use thiserror::Error;
 
 #[derive(Debug, Error, Serialize)]
@@ -22,7 +22,7 @@ pub enum LockUnlockError {
     #[error("{0}")]
     Device(DeviceError),
     #[error("{0}")]
-    Other(CombinedDeviceError)
+    Other(CombinedDeviceError),
 }
 
 /// This trait belongs to any devices that support locking and unlocking, and/or reporting a locked state.

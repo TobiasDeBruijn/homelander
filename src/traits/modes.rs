@@ -1,7 +1,7 @@
-use std::collections::HashMap;
-use serde::Serialize;
-use crate::{CombinedDeviceError};
 use crate::traits::Language;
+use crate::CombinedDeviceError;
+use serde::Serialize;
+use std::collections::HashMap;
 
 /// Available mode.
 #[derive(Debug, Serialize)]
@@ -32,7 +32,7 @@ pub struct SettingValue {
     /// Synonyms of the setting. The first string in this list is used as the canonical name of the level in that language.
     pub setting_synonym: Vec<String>,
     /// Language code
-    pub lang: Language
+    pub lang: Language,
 }
 
 /// Synonyms of the mode in a given language.

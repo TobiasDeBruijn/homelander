@@ -1,6 +1,6 @@
+use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
 use thiserror::Error;
-use serde::{Serialize, Deserialize};
 
 pub mod arm_disarm;
 pub mod brightness;
@@ -65,7 +65,7 @@ pub enum CombinedDeviceError {
     #[error("{0}")]
     DeviceException(DeviceException),
     #[error("{0}")]
-    Other(#[from] crate::SerializableError)
+    Other(#[from] crate::SerializableError),
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
@@ -85,7 +85,7 @@ pub enum Language {
     Spanish,
     Swedish,
     Thai,
-    Chinese
+    Chinese,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -156,84 +156,54 @@ pub trait ObjectDetection {
 /// than one direction. For example, some blinds may open either to the left or to the right.
 /// In some cases, opening certain devices may be a security sensitive action which can
 /// require two-factor authentication authentication. See [Two-factor authentication](https://developers.google.com/assistant/smarthome/two-factor-authentication).
-pub trait OpenClose {
-
-}
+pub trait OpenClose {}
 
 /// This trait belongs to devices that support rebooting, such as routers. The device needs to support rebooting as a single action.
-pub trait Reboot {
-
-}
+pub trait Reboot {}
 
 /// This trait belongs to devices that support rotation, such as blinds with rotatable slats.
-pub trait Rotation {
-
-}
+pub trait Rotation {}
 
 /// This trait represents any device that has an ongoing duration for its operation which can be queried.
 /// This includes, but is not limited to, devices that operate cyclically, such as washing machines, dryers, and dishwashers.
-pub trait RunCycle {
-
-}
+pub trait RunCycle {}
 
 /// This trait covers both quantitative measurement (for example,
 /// air quality index or smoke level) and qualitative state (for example, whether the air quality is healthy
 /// or whether the smoke level is low or high).
-pub trait SensorState {
-
-}
+pub trait SensorState {}
 
 /// In the case of scenes, the type maps 1:1 to the trait, as scenes don't combine with other traits to form composite devices.
-pub trait Scene {
-
-}
+pub trait Scene {}
 
 /// This trait belongs to devices that support software updates such as a router. Optionally, these devices may report the time of the last successful update.
-pub trait SoftwareUpdate {
-
-}
+pub trait SoftwareUpdate {}
 
 /// Starting and stopping a device serves a similar function to turning it on and off. Devices that inherit this trait function differently when
 /// turned on and when started. Unlike devices that simply have an on and off state,
 /// some devices that can start and stop are also able to pause while performing operation.
-pub trait StartStop {
-
-}
+pub trait StartStop {}
 
 /// This trait reports the current status or state of a specific device or a connected group of devices.
-pub trait StatusReport {
-
-}
+pub trait StatusReport {}
 
 /// Trait for devices (other than thermostats) that support controlling temperature,
 /// either within or around the device. This includes devices such as ovens and refrigerators.
-pub trait TemperatureControl {
-
-}
+pub trait TemperatureControl {}
 
 /// This trait covers handling both temperature point and modes.
-pub trait TemperatureSetting {
-
-}
+pub trait TemperatureSetting {}
 
 /// The Timer trait represents a timer on a device, primarily kitchen appliances such as ovens and microwaves, but not limited to them.
-pub trait Timer {
-
-}
+pub trait Timer {}
 
 /// This trait belongs to any devices with settings that can only exist in one of two states.
 /// These settings can represent a physical button with an on/off or active/inactive state,
 /// a checkbox in HTML, or any other sort of specifically enabled/disabled element.
-pub trait Toggles {
-
-}
+pub trait Toggles {}
 
 /// his trait supports media devices which are able to control media playback (for example, resuming music that's paused).
-pub trait TransportControl {
-
-}
+pub trait TransportControl {}
 
 /// This trait belongs to devices which are able to change volume (for example, setting the volume to a certain level, mute, or unmute).
-pub trait Volume {
-
-}
+pub trait Volume {}

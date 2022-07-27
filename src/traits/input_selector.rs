@@ -1,7 +1,7 @@
+use crate::traits::Language;
+use crate::CombinedDeviceError;
 use serde::Serialize;
 use thiserror::Error;
-use crate::{CombinedDeviceError};
-use crate::traits::Language;
 
 #[derive(Debug, Error, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -16,7 +16,7 @@ pub enum InputSelectorError {
     #[error("{0}")]
     Device(DeviceError),
     #[error("{0}")]
-    Other(CombinedDeviceError)
+    Other(CombinedDeviceError),
 }
 
 /// Available input.

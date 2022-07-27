@@ -1,5 +1,5 @@
-use crate::{CombinedDeviceError};
 use crate::traits::Language;
+use crate::CombinedDeviceError;
 
 /// This trait is used for devices that can be "found". This includes phones,
 /// robots (including vacuums and mowers), drones, and tag-specific products that attach to other devices.

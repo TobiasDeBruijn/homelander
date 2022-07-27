@@ -1,5 +1,5 @@
-use serde::Serialize;
 use crate::CombinedDeviceError;
+use serde::Serialize;
 
 #[derive(Debug, Serialize)]
 #[serde(rename = "SCREAMING_SNAKE_CASE")]

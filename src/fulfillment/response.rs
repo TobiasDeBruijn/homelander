@@ -4,24 +4,24 @@ use serde::Serialize;
 #[serde(rename_all = "camelCase")]
 pub struct Response {
     pub request_id: String,
-    pub payload: ResponsePayload
+    pub payload: ResponsePayload,
 }
 
 #[derive(Debug, Serialize)]
 pub enum ResponsePayload {
     Sync(sync::Payload),
-    Execute(execute::Payload,),
+    Execute(execute::Payload),
 }
 
 pub mod sync {
-    use serde::Serialize;
     use crate::device_trait::Trait;
+    use serde::Serialize;
 
     #[derive(Debug, Serialize)]
     #[serde(rename_all = "camelCase")]
     pub struct Payload {
         pub agent_user_id: String,
-        pub devices: Vec<Device>
+        pub devices: Vec<Device>,
     }
 
     #[derive(Debug, Serialize)]
@@ -56,12 +56,12 @@ pub mod sync {
 }
 
 pub mod execute {
-    use serde::Serialize;
     use crate::serializable_error::SerializableError;
+    use serde::Serialize;
 
     #[derive(Debug, Serialize)]
     pub struct Payload {
-        pub commands: Vec<Command>
+        pub commands: Vec<Command>,
     }
 
     #[derive(Debug, Serialize)]
@@ -87,6 +87,6 @@ pub mod execute {
     #[serde(rename_all = "camelCase")]
     pub struct CommandState {
         pub lock: Option<bool>,
-        pub guest_network_password: Option<String>
+        pub guest_network_password: Option<String>,
     }
 }

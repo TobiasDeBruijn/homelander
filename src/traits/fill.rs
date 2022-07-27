@@ -1,6 +1,6 @@
-use serde::Serialize;
-use crate::{CombinedDeviceError};
 use crate::traits::Language;
+use crate::CombinedDeviceError;
+use serde::Serialize;
 
 /// Describes different levels of filling the device.
 #[derive(Debug, Serialize)]
@@ -28,9 +28,8 @@ pub struct LevelValue {
     /// Synonym of the level. The first string in this list is used as the canonical name of the level in that language.
     pub level_synonym: Vec<String>,
     /// Language code
-    pub lang: Language
+    pub lang: Language,
 }
-
 
 /// This trait applies to devices that support being filled, such as a bathtub.
 pub trait Fill {

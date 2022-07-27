@@ -1,7 +1,7 @@
-use serde::{Serialize};
-use thiserror::Error;
-use crate::CombinedDeviceError;
 use crate::traits::{SizeUnit, Synonym};
+use crate::CombinedDeviceError;
+use serde::Serialize;
+use thiserror::Error;
 
 #[derive(Debug, Serialize)]
 pub struct DispenseItem {
@@ -20,7 +20,7 @@ pub struct DispenseAmount {
     /// Dispensed amount.
     amount: i32,
     /// Dispensed unit.
-    unit: SizeUnit
+    unit: SizeUnit,
 }
 
 /// Preset.
@@ -94,7 +94,7 @@ pub enum DispenseError {
     #[error("{0}")]
     Exception(DeviceException),
     #[error("{0}")]
-    Other(CombinedDeviceError)
+    Other(CombinedDeviceError),
 }
 
 #[derive(Debug, Serialize)]

@@ -16,16 +16,14 @@ pub enum Input {
     Sync,
 }
 
-pub mod query {
-
-}
+pub mod query {}
 
 pub mod execute {
-    use std::collections::HashMap;
-    use serde::Deserialize;
     use crate::traits::color_setting::ColorCommand;
     use crate::traits::cook::CookingMode;
     use crate::traits::{Language, SizeUnit};
+    use serde::Deserialize;
+    use std::collections::HashMap;
 
     #[derive(Debug, PartialEq, Deserialize)]
     pub struct Execute {
@@ -35,7 +33,7 @@ pub mod execute {
     #[derive(Debug, PartialEq, Deserialize)]
     pub struct Command {
         pub devices: Vec<Device>,
-        pub execution: Vec<CommandType>
+        pub execution: Vec<CommandType>,
     }
 
     #[derive(Debug, PartialEq, Eq, Deserialize)]
@@ -88,7 +86,7 @@ pub mod execute {
         #[serde(rename = "action.devices.commands.ColorAbsolute")]
         ColorAbsolute {
             /// Color to set.
-            color: ColorCommand
+            color: ColorCommand,
         },
         /// Start or stop cooking.
         #[serde(rename = "action.devices.commands.Cook")]
@@ -126,7 +124,7 @@ pub mod execute {
         #[serde(rename = "action.devices.commands.Charge")]
         Charge {
             /// True to start charging, false to stop charging.
-            charge: bool
+            charge: bool,
         },
         /// Set speed.
         #[serde(rename = "action.devices.commands.SetFanSpeed")]
@@ -137,7 +135,6 @@ pub mod execute {
             /// The requested speed setting percentage.
             #[serde(rename = "fanSpeedPercent")]
             fan_speed_percent: Option<f32>,
-
         },
         /// Set relative speed.
         #[serde(rename = "action.devices.commands.SetFanSpeedRelative")]
@@ -241,7 +238,7 @@ pub mod execute {
         SetModes {
             /// Key/value pair with the mode name of the device as the key, and the new setting_name as the value.
             #[serde(rename = "updateModeSettings")]
-            update_mode_settings: HashMap<String, String>
+            update_mode_settings: HashMap<String, String>,
         },
         /// Enable or disable the guest network.
         #[serde(rename = "action.devices.commands.EnableDisableGuestNetwork")]
@@ -278,7 +275,7 @@ pub mod execute {
         OnOff {
             /// Whether to turn the device on or off.
             on: bool,
-        }
+        },
     }
 }
 
@@ -288,7 +285,7 @@ mod test {
 
     #[test]
     fn test_execute_payload() {
-        use crate::fulfillment::request::execute::{Command, Execute, Device};
+        use crate::fulfillment::request::execute::{Command, Device, Execute};
 
         let payload = r#"
             {
@@ -330,24 +327,12 @@ mod test {
 
         let request = Request {
             request_id: "ff36a3cc-ec34-11e6-b1a0-64510650abcf".to_string(),
-            inputs: vec! [
-                Input::Execute(Execute {
-                    commands: vec! [
-                        Command {
-                            devices: vec! [
-                                Device {
-                                    id: "123".to_string(),
-                                },
-                                Device {
-                                    id: "456".to_string()
-                                }
-                            ],
-                            execution: vec! [
-                            ]
-                        }
-                    ]
-                })
-            ]
+            inputs: vec![Input::Execute(Execute {
+                commands: vec![Command {
+                    devices: vec![Device { id: "123".to_string() }, Device { id: "456".to_string() }],
+                    execution: vec![],
+                }],
+            })],
         };
 
         let deserialized = serde_json::from_str::<Request>(payload);

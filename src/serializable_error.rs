@@ -1,8 +1,8 @@
 use serde::{Serialize, Serializer};
-use std::fmt;
 use std::error::Error;
+use std::fmt;
 
-pub trait ToStringError: Error + ToString + 'static where {}
+pub trait ToStringError: Error + ToString + 'static {}
 
 impl<T: Error + ToString + 'static> ToStringError for T {}
 
@@ -10,8 +10,8 @@ pub struct SerializableError(pub(crate) Box<dyn ToStringError>);
 
 impl Serialize for SerializableError {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-        where
-            S: Serializer
+    where
+        S: Serializer,
     {
         let self_string = self.0.to_string();
         serializer.serialize_str(&self_string)

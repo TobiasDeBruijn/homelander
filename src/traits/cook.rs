@@ -1,7 +1,7 @@
-use serde::{Serialize, Deserialize};
 use crate::traits::{SizeUnit, Synonym};
-use thiserror::Error;
 use crate::CombinedDeviceError;
+use serde::{Deserialize, Serialize};
+use thiserror::Error;
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
@@ -34,7 +34,7 @@ pub enum CookingMode {
     Stew,
     Stir,
     Warm,
-    Whip
+    Whip,
 }
 
 /// Food preset.
@@ -62,7 +62,7 @@ pub enum CookError {
     #[error("UnknownFoodPreset")]
     UnknownFoodPreset,
     #[error("{0}")]
-    Other(#[from] CombinedDeviceError)
+    Other(#[from] CombinedDeviceError),
 }
 
 #[derive(Debug)]

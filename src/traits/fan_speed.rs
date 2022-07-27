@@ -1,7 +1,7 @@
+use crate::traits::Language;
+use crate::CombinedDeviceError;
 use serde::Serialize;
 use thiserror::Error;
-use crate::{CombinedDeviceError};
-use crate::traits::Language;
 
 #[derive(Debug, Error, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -36,7 +36,7 @@ pub struct FanSpeedItem {
     /// Internal name of the speed setting. This can be non-user-friendly, and will be shared across all languages.
     speed_name: String,
     /// Synonyms for the speed setting in each supported languages.
-    speed_values: Vec<FanSpeedValue>
+    speed_values: Vec<FanSpeedValue>,
 }
 
 /// Synonym for the speed setting in a given language.
@@ -46,7 +46,7 @@ pub struct FanSpeedValue {
     /// The first synonym in the list will be considered the canonical name of the speed setting.
     speed_synonym: Vec<String>,
     /// Language code
-    lang: Language
+    lang: Language,
 }
 
 /// This trait belongs to devices that support setting the speed of a fan (that is, blowing air from the device at various levels,

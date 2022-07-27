@@ -1,7 +1,7 @@
 use crate::traits::Language;
-use thiserror::Error;
-use serde::{Serialize, Deserialize};
 use crate::CombinedDeviceError;
+use serde::{Deserialize, Serialize};
+use thiserror::Error;
 
 /// Security level.
 #[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]

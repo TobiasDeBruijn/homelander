@@ -1,5 +1,5 @@
 use crate::traits::CombinedDeviceError;
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 /// Color model support. At least one of the fields has to be [Some]
 #[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]

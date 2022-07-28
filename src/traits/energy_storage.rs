@@ -45,6 +45,7 @@ pub enum CapacityUnit {
     KilowattHours,
 }
 
+#[derive(Debug, Serialize)]
 pub struct CapacityValue {
     /// The capacity value.
     pub raw_value: i32,

@@ -44,6 +44,48 @@ impl<T: GoogleHomeDevice + Clone + Send + Sync + ?Sized + 'static> Device<T> {
         }
     }
 
+    pub(crate) fn query(&self) -> fulfillment::response::query::QueryDeviceState {
+        let states = self.query_get_states();
+        let states = match states {
+            Ok(s) => s,
+            Err(e) => return fulfillment::response::query::QueryDeviceState {
+                required: fulfillment::response::query::RequiredQueryDeviceState {
+                    status: fulfillment::response::query::QueryStatus::Error,
+                    on: false,
+                    online: self.inner.is_online(),
+                    error_code: Some(e.to_string()),
+                },
+                traits: None
+            }
+        };
+
+        if !self.inner.is_online() {
+            return fulfillment::response::query::QueryDeviceState {
+                required: fulfillment::response::query::RequiredQueryDeviceState {
+                    status: fulfillment::response::query::QueryStatus::Offline,
+                    on: true,
+                    online: false,
+                    error_code: None,
+                },
+                traits: None
+            }
+        }
+
+        fulfillment::response::query::QueryDeviceState {
+            required: fulfillment::response::query::RequiredQueryDeviceState {
+                status: fulfillment::response::query::QueryStatus::Success,
+                online: true,
+                on: true,
+                error_code: None,
+            },
+            traits: Some(states),
+        }
+    }
+
+    fn query_get_states(&self) -> Result<fulfillment::response::query::TraitsQueryDeviceState, Box<dyn Error>> {
+        todo!()
+    }
+
     pub(crate) fn sync(&self) -> Result<fulfillment::response::sync::Device, Box<dyn Error>> {
         let name = self.inner.get_device_name();
         let info = self.inner.get_device_info();
@@ -669,40 +711,40 @@ impl<T: GoogleHomeDevice + Clone + Send + Sync + ?Sized + 'static> Device<T> {
 #[allow(unused)]
 #[derive(Default)]
 pub struct DeviceTraits {
-    app_selector: Option<Box<dyn AppSelector>>,
-    arm_disarm: Option<Box<dyn ArmDisarm>>,
-    brightness: Option<Box<dyn Brightness>>,
-    camera_stream: Option<Box<dyn CameraStream>>,
-    channel: Option<Box<dyn Channel>>,
-    color_setting: Option<Box<dyn ColorSetting>>,
-    cook: Option<Box<dyn Cook>>,
-    dispense: Option<Box<dyn Dispense>>,
-    dock: Option<Box<dyn Dock>>,
-    energy_storage: Option<Box<dyn EnergyStorage>>,
-    fan_speed: Option<Box<dyn FanSpeed>>,
-    fill: Option<Box<dyn Fill>>,
-    humidity_setting: Option<Box<dyn HumiditySetting>>,
-    input_selector: Option<Box<dyn InputSelector>>,
-    light_effects: Option<Box<dyn LightEffects>>,
-    locator: Option<Box<dyn Locator>>,
-    lock_unlock: Option<Box<dyn LockUnlock>>,
-    media_state: Option<Box<dyn MediaState>>,
-    modes: Option<Box<dyn Modes>>,
-    network_control: Option<Box<dyn NetworkControl>>,
-    object_detection: Option<Box<dyn ObjectDetection>>,
-    on_off: Option<Box<dyn OnOff>>,
-    open_close: Option<Box<dyn OpenClose>>,
-    reboot: Option<Box<dyn Reboot>>,
-    rotation: Option<Box<dyn Rotation>>,
-    run_cycle: Option<Box<dyn RunCycle>>,
-    sensor_state: Option<Box<dyn SensorState>>,
-    scene: Option<Box<dyn Scene>>,
-    software_update: Option<Box<dyn SoftwareUpdate>>,
-    start_stop: Option<Box<dyn StartStop>>,
-    status_report: Option<Box<dyn StatusReport>>,
-    temperature_control: Option<Box<dyn TemperatureControl>>,
-    temperature_setting: Option<Box<dyn TemperatureSetting>>,
-    timer: Option<Box<dyn Timer>>,
-    transport_control: Option<Box<dyn TransportControl>>,
-    volume: Option<Box<dyn Volume>>,
+    app_selector: Option<Box<dyn AppSelector + Send + Sync>>,
+    arm_disarm: Option<Box<dyn ArmDisarm + Send + Sync>>,
+    brightness: Option<Box<dyn Brightness + Send + Sync>>,
+    camera_stream: Option<Box<dyn CameraStream + Send + Sync>>,
+    channel: Option<Box<dyn Channel + Send + Sync>>,
+    color_setting: Option<Box<dyn ColorSetting + Send + Sync>>,
+    cook: Option<Box<dyn Cook + Send + Sync>>,
+    dispense: Option<Box<dyn Dispense + Send + Sync>>,
+    dock: Option<Box<dyn Dock + Send + Sync>>,
+    energy_storage: Option<Box<dyn EnergyStorage + Send + Sync>>,
+    fan_speed: Option<Box<dyn FanSpeed + Send + Sync>>,
+    fill: Option<Box<dyn Fill + Send + Sync>>,
+    humidity_setting: Option<Box<dyn HumiditySetting + Send + Sync>>,
+    input_selector: Option<Box<dyn InputSelector + Send + Sync>>,
+    light_effects: Option<Box<dyn LightEffects + Send + Sync>>,
+    locator: Option<Box<dyn Locator + Send + Sync>>,
+    lock_unlock: Option<Box<dyn LockUnlock + Send + Sync>>,
+    media_state: Option<Box<dyn MediaState + Send + Sync>>,
+    modes: Option<Box<dyn Modes + Send + Sync>>,
+    network_control: Option<Box<dyn NetworkControl + Send + Sync>>,
+    object_detection: Option<Box<dyn ObjectDetection + Send + Sync>>,
+    on_off: Option<Box<dyn OnOff + Send + Sync>>,
+    open_close: Option<Box<dyn OpenClose + Send + Sync>>,
+    reboot: Option<Box<dyn Reboot + Send + Sync>>,
+    rotation: Option<Box<dyn Rotation + Send + Sync>>,
+    run_cycle: Option<Box<dyn RunCycle + Send + Sync>>,
+    sensor_state: Option<Box<dyn SensorState + Send + Sync>>,
+    scene: Option<Box<dyn Scene + Send + Sync>>,
+    software_update: Option<Box<dyn SoftwareUpdate + Send + Sync>>,
+    start_stop: Option<Box<dyn StartStop + Send + Sync>>,
+    status_report: Option<Box<dyn StatusReport + Send + Sync>>,
+    temperature_control: Option<Box<dyn TemperatureControl + Send + Sync>>,
+    temperature_setting: Option<Box<dyn TemperatureSetting + Send + Sync>>,
+    timer: Option<Box<dyn Timer + Send + Sync>>,
+    transport_control: Option<Box<dyn TransportControl + Send + Sync>>,
+    volume: Option<Box<dyn Volume + Send + Sync>>,
 }

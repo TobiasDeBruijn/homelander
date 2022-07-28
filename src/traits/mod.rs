@@ -44,6 +44,9 @@ pub trait GoogleHomeDevice {
     fn will_report_state(&self) -> bool;
 
     fn get_device_name(&self) -> DeviceName;
+
+    /// Indicates if the device is online (that is, reachable) or not.
+    fn is_online(&self) -> bool;
 }
 
 #[derive(Debug, Serialize, Error)]

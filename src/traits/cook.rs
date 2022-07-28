@@ -96,7 +96,7 @@ pub trait Cook {
     /// Defines the current amount of food cooking associated with the currentFoodUnit,
     /// if a quantity was specified. Should not be reported if nothing is currently cooking,
     /// or if there is no quantity associated with this food preset.
-    fn get_current_food_quantity(&self) -> Result<Option<i32>, CookError>;
+    fn get_current_food_quantity(&self) -> Result<Option<f32>, CookError>;
 
     /// The unit associated with the currentFoodQuantity, from the list of supported_units attribute.
     fn get_current_food_unit(&self) -> Result<Option<SizeUnit>, CookError>;

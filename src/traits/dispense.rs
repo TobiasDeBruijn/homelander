@@ -18,7 +18,7 @@ pub struct DispenseItem {
 #[derive(Debug, Serialize)]
 pub struct DispenseAmount {
     /// Dispensed amount.
-    amount: i32,
+    amount: f32,
     /// Dispensed unit.
     unit: SizeUnit,
 }

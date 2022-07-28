@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::error::Error;
 use crate::fulfillment::request::execute::CommandType;
 use crate::traits::arm_disarm::ArmDisarm;
@@ -8,15 +9,17 @@ mod device;
 mod device_trait;
 mod device_type;
 mod execute_error;
+#[doc(hidden)]
 mod fulfillment;
 mod serializable_error;
 pub mod traits;
 
-use crate::device::Device;
 use crate::fulfillment::request::Input;
-use crate::fulfillment::response::execute::CommandStatus;
 use crate::traits::{CombinedDeviceError, GoogleHomeDevice};
+use crate::fulfillment::response::execute::CommandStatus;
+
 pub use serializable_error::*;
+pub use device::Device;
 
 pub struct Homelander<T: GoogleHomeDevice + Clone + Send + Sync + 'static> {
     agent_user_id: String,
@@ -25,8 +28,8 @@ pub struct Homelander<T: GoogleHomeDevice + Clone + Send + Sync + 'static> {
 
 struct CommandOutput {
     id: String,
-    status: crate::fulfillment::response::execute::CommandStatus,
-    state: Option<crate::fulfillment::response::execute::CommandState>,
+    status: CommandStatus,
+    state: Option<fulfillment::response::execute::CommandState>,
     error: Option<SerializableError>,
 }
 
@@ -92,7 +95,24 @@ impl<T: GoogleHomeDevice + Clone + Send + Sync + 'static> Homelander<T> {
                     fulfillment::response::ResponsePayload::Execute(fulfillment::response::execute::Payload { commands })
                 }
                 Input::Sync => fulfillment::response::ResponsePayload::Sync(self.sync()),
-                // TODO QUERY
+                Input::Query(payload) => {
+                    let device_states = payload.devices.into_iter()
+                        .map(|device| device.id)
+                        .map(|device_id| (device_id.clone(), self.devices.iter()
+                            .filter(|device| device.id.eq(&device_id))
+                            .map(|device| device.query())
+                            .collect::<Vec<_>>())
+                        )
+                        .filter(|(_, device_states)| !device_states.is_empty())
+                        .map(|(id, mut device_state)| (id, device_state.remove(0)))
+                        .collect::<HashMap<_, _>>();
+
+                    fulfillment::response::ResponsePayload::Query(fulfillment::response::query::Payload {
+                        devices: device_states,
+                        error_code: None,
+                        debug_string: None,
+                    })
+                }
             })
             .collect::<Vec<_>>()
             .remove(0);
@@ -183,6 +203,10 @@ mod test {
                     default_names: Vec::new(),
                     name: String::default(),
                 }
+            }
+
+            fn is_online(&self) -> bool {
+                true
             }
         }
 

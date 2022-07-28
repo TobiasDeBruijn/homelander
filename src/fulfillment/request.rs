@@ -12,11 +12,25 @@ pub struct Request {
 pub enum Input {
     #[serde(rename = "action.devices.EXECUTE")]
     Execute(execute::Execute),
+    #[serde(rename = "action.devices.QUERY")]
+    Query(query::Payload),
     #[serde(rename = "action.devices.SYNC")]
     Sync,
 }
 
-pub mod query {}
+pub mod query {
+    use serde::Deserialize;
+
+    #[derive(Debug, PartialEq, Deserialize)]
+    pub struct Payload {
+        pub devices: Vec<Device>,
+    }
+
+    #[derive(Debug, PartialEq, Deserialize)]
+    pub struct Device {
+        pub id: String,
+    }
+}
 
 pub mod execute {
     use crate::traits::color_setting::ColorCommand;

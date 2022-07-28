@@ -248,6 +248,7 @@ pub mod execute {
         pub status: CommandStatus,
         pub states: Option<CommandState>,
         pub error_code: Option<SerializableError>,
+        pub debug_string: Option<String>,
     }
 
     #[derive(Debug, Default, Serialize)]

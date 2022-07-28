@@ -1,3 +1,128 @@
+//! # Homelander
+//! Homelander is a Google Home integration framework. It provides serialization and deserialization for fulfillment requests.
+//! It also handles translation between Google Home traits and Rust traits. Furthermore it provides error handling and translating between
+//! Rust errors and errors accepted by Google Home.
+//!
+//! Homelander does *not* provide an OAuth2 server or a web server.
+//!
+//! ## Getting started
+//! To get started, you'll first have to create your own OAuth2 server or use an existing implementation.
+//! Refer to [the Google documentation](https://developers.google.com/assistant/smarthome/concepts/account-linking) for details.
+//!
+//! After you've done this, you've presumably also configured your web server. You can then easily get started with Homelander.
+//! Create a Device like so:
+//! ```
+//! use std::sync::{Arc, Mutex};
+//! use homelander::{Device, DeviceType, Homelander};
+//! use homelander::traits::{CombinedDeviceError, DeviceInfo, DeviceName, GoogleHomeDevice};
+//! use homelander::traits::on_off::OnOff;
+//!
+//! #[derive(Clone)]
+//! struct MyDevice(bool);
+//!
+//! // Implement the basic GoogleHomeDevice trait,
+//! // This gives the basic information required for every device
+//! impl GoogleHomeDevice for MyDevice {
+//!     fn get_device_info(&self) -> DeviceInfo {
+//!         DeviceInfo {
+//!             model: "mydevice".to_string(),
+//!             manufacturer: "mydevice company".to_string(),
+//!             hw: "0.1.0".to_string(),
+//!             sw: "0.1.0".to_string(),
+//!         }
+//!     }
+//!
+//!     fn will_report_state(&self) -> bool {
+//!         false
+//!     }
+//!
+//!     fn get_device_name(&self) -> DeviceName {
+//!         DeviceName {
+//!             name: "MyDevice".to_string(),
+//!             default_names: Vec::new(),
+//!             nicknames: Vec::new(),
+//!         }
+//!     }
+//!
+//!     fn is_online(&self) -> bool {
+//!            true
+//!     }
+//! }
+//!
+//! // Implement a device specific trait. E.g. OnOff
+//! impl OnOff for MyDevice {
+//!     fn is_on(&self) -> Result<bool, CombinedDeviceError> {
+//!         Ok(self.0)
+//!     }
+//!
+//!     fn set_on(&mut self, on: bool) -> Result<(), CombinedDeviceError> {
+//!         self.0 = on;
+//!         Ok(())
+//!     }
+//! }
+//!
+//! // Create the device
+//! let mut device = Device::new(Arc::new(Mutex::new(MyDevice(false))), DeviceType::Outlet, "my_id".to_string());
+//! // Register the OnOff traitr
+//! device.set_on_off();
+//!
+//! // Create the Homelander struct
+//! let mut homelander = Homelander::new("my_user_id".to_string());
+//! homelander.add_device(device);
+//! ```
+//! This will create a basic setup. You can now register a fulfillment route with your webserver.
+//! This route should take a JSON payload: [Request]. This request can then be passed to Homelander:
+//! ```
+//! # use std::sync::{Arc, Mutex};
+//! # use homelander::{Device, DeviceTraits, DeviceType, Homelander};
+//! # use homelander::traits::{DeviceInfo, DeviceName, GoogleHomeDevice};
+//! #
+//! # fn get_homelander(_: String) -> Homelander {
+//! #    let mut homelander = Homelander::new("my_user_id".to_string());
+//! #    let mut device = Device::new(Arc::new(Mutex::new(MyDevice(false))), DeviceType::Outlet, "my_id".to_string());
+//! #    device.set_on_off();
+//! #    homelander.add_device(device as Device<dyn DeviceTraits>);
+//! #    homelander
+//! # }
+//! # #[derive(Clone)]
+//! # struct MyDevice(bool);
+//! #
+//! # impl GoogleHomeDevice for MyDevice {
+//! #    fn get_device_info(&self) -> DeviceInfo {
+//! #        DeviceInfo {
+//! #            model: "mydevice".to_string(),
+//! #            manufacturer: "mydevice company".to_string(),
+//! #            hw: "0.1.0".to_string(),
+//! #            sw: "0.1.0".to_string(),
+//! #        }
+//! #    }
+//! #
+//! #    fn will_report_state(&self) -> bool {
+//! #        false
+//! #    }
+//! #
+//! #    fn get_device_name(&self) -> DeviceName {
+//! #        DeviceName {
+//! #            name: "MyDevice".to_string(),
+//! #            default_names: Vec::new(),
+//! #            nicknames: Vec::new(),
+//! #        }
+//! #    }
+//! #
+//! #    fn is_online(&self) -> bool {
+//! #           true
+//! #    }
+//! # }
+//!
+//! // Retrieve the Homelander for the user,
+//! // The user can be identified through the OAuth2 token provided by Google
+//! let mut homelander = get_homelander("my_user_id".to_string());
+//! // Let homelander handle the request and create a response
+//! // The response can then be returned to Google as JSON
+//! let response = homelander.handle_request(request);
+//! ```
+//!
+
 use std::collections::HashMap;
 use std::error::Error;
 use crate::fulfillment::request::execute::CommandType;
@@ -18,30 +143,50 @@ use crate::fulfillment::request::Input;
 use crate::traits::{CombinedDeviceError, GoogleHomeDevice};
 use crate::fulfillment::response::execute::CommandStatus;
 
+pub use fulfillment::request::Request;
+pub use fulfillment::response::Response;
+pub use device_type::DeviceType;
 pub use serializable_error::*;
 pub use device::Device;
 
-pub struct Homelander<T: GoogleHomeDevice + Clone + Send + Sync + 'static> {
-    agent_user_id: String,
-    devices: Vec<Device<T>>,
-}
-
+/// The output of an EXECUTE command
 struct CommandOutput {
     id: String,
     status: CommandStatus,
     state: Option<fulfillment::response::execute::CommandState>,
     error: Option<SerializableError>,
+    debug_string: Option<String>,
 }
 
-impl<T: GoogleHomeDevice + Clone + Send + Sync + 'static> Homelander<T> {
-    pub fn add_device(&mut self, device: Device<T>) {
+pub trait DeviceTraits: GoogleHomeDevice + Send + Sync + 'static {}
+
+impl<T: GoogleHomeDevice + Send + Sync + 'static> DeviceTraits for T {}
+
+/// Keeps track of all devices owned by a specific user.
+pub struct Homelander {
+    agent_user_id: String,
+    devices: Vec<Device<dyn DeviceTraits>>,
+}
+
+impl Homelander {
+    pub fn new(user_id: String) -> Self {
+        Self {
+            agent_user_id: user_id,
+            devices: Vec::new(),
+        }
+    }
+
+    /// Add a device
+    pub fn add_device(&mut self, device: Device<dyn DeviceTraits>) {
         self.devices.push(device);
     }
 
+    /// Remove a device with ID `id`
     pub fn remove_device<S: AsRef<str>>(&mut self, id: S) {
         self.devices.retain(|f| f.id.ne(id.as_ref()));
     }
 
+    /// Handle an incomming fulfillment request from Google and create a response for it
     pub fn handle_request(&mut self, request: fulfillment::request::Request) -> fulfillment::response::Response {
         let payload = request
             .inputs
@@ -76,18 +221,22 @@ impl<T: GoogleHomeDevice + Clone + Send + Sync + 'static> Homelander<T> {
                                 status: output.status,
                                 states: output.state,
                                 error_code: None,
+                                debug_string: output.debug_string,
                             },
                             CommandStatus::Error => fulfillment::response::execute::Command {
                                 ids: vec![output.id],
                                 status: CommandStatus::Error,
                                 states: None,
                                 error_code: output.error,
+                                debug_string: output.debug_string,
+
                             },
                             CommandStatus::Offline | CommandStatus::Pending => fulfillment::response::execute::Command {
                                 ids: vec![output.id],
                                 status: output.status,
                                 states: None,
                                 error_code: None,
+                                debug_string: output.debug_string,
                             },
                         })
                         .collect::<Vec<_>>();
@@ -95,24 +244,7 @@ impl<T: GoogleHomeDevice + Clone + Send + Sync + 'static> Homelander<T> {
                     fulfillment::response::ResponsePayload::Execute(fulfillment::response::execute::Payload { commands })
                 }
                 Input::Sync => fulfillment::response::ResponsePayload::Sync(self.sync()),
-                Input::Query(payload) => {
-                    let device_states = payload.devices.into_iter()
-                        .map(|device| device.id)
-                        .map(|device_id| (device_id.clone(), self.devices.iter()
-                            .filter(|device| device.id.eq(&device_id))
-                            .map(|device| device.query())
-                            .collect::<Vec<_>>())
-                        )
-                        .filter(|(_, device_states)| !device_states.is_empty())
-                        .map(|(id, mut device_state)| (id, device_state.remove(0)))
-                        .collect::<HashMap<_, _>>();
-
-                    fulfillment::response::ResponsePayload::Query(fulfillment::response::query::Payload {
-                        devices: device_states,
-                        error_code: None,
-                        debug_string: None,
-                    })
-                }
+                Input::Query(payload) => fulfillment::response::ResponsePayload::Query(self.query(payload))
             })
             .collect::<Vec<_>>()
             .remove(0);
@@ -123,6 +255,27 @@ impl<T: GoogleHomeDevice + Clone + Send + Sync + 'static> Homelander<T> {
         }
     }
 
+    /// QUERY all devices specified in `payload`
+    fn query(&self, payload: fulfillment::request::query::Payload) -> fulfillment::response::query::Payload {
+        let device_states = payload.devices.into_iter()
+            .map(|device| device.id)
+            .map(|device_id| (device_id.clone(), self.devices.iter()
+                .filter(|device| device.id.eq(&device_id))
+                .map(|device| device.query())
+                .collect::<Vec<_>>())
+            )
+            .filter(|(_, device_states)| !device_states.is_empty())
+            .map(|(id, mut device_state)| (id, device_state.remove(0)))
+            .collect::<HashMap<_, _>>();
+
+        fulfillment::response::query::Payload {
+            devices: device_states,
+            error_code: None,
+            debug_string: None,
+        }
+    }
+
+    /// SYNC all devices
     fn sync(&self) -> fulfillment::response::sync::Payload {
         let devices = self.devices.iter()
             .map(|x| x.sync())
@@ -155,6 +308,7 @@ impl<T: GoogleHomeDevice + Clone + Send + Sync + 'static> Homelander<T> {
         }
     }
 
+    /// EXECUTE `command` on `device_id`
     fn execute(&mut self, device_id: &str, command: CommandType) -> Option<CommandOutput> {
         let mut output = self
             .devices
@@ -173,6 +327,7 @@ impl<T: GoogleHomeDevice + Clone + Send + Sync + 'static> Homelander<T> {
 
 #[cfg(test)]
 mod test {
+    use std::sync::{Arc, Mutex};
     use crate::device_type::DeviceType;
     use crate::traits::arm_disarm::{ArmDisarmError, ArmLevel};
     use crate::traits::{DeviceInfo, DeviceName, GoogleHomeDevice};
@@ -244,7 +399,7 @@ mod test {
             }
         }
 
-        let mut device = Device::new(Box::new(Foo), DeviceType::AcUnit, String::default());
+        let mut device = Device::new(Arc::new(Mutex::new(Foo)), DeviceType::AcUnit, String::default());
         device.set_arm_disarm();
         device.execute(CommandType::ArmDisarm {
             arm: true,

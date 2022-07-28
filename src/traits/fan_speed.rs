@@ -23,6 +23,7 @@ pub enum FanSpeedError {
 }
 
 /// Speed settings supported by the device.
+#[derive(Debug, Serialize)]
 pub struct AvailableFanSpeeds {
     /// If set to true, additional grammar for increase or decrease logic will apply, in the order (increasing) of the speeds array.
     pub speeds: Vec<FanSpeedItem>,

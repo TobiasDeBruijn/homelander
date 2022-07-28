@@ -3,6 +3,12 @@ use crate::CombinedDeviceError;
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
+#[derive(Debug, Serialize)]
+pub struct AvailableArmLevels {
+    pub levels: Option<Vec<ArmLevel>>,
+    pub ordered: bool,
+}
+
 /// Security level.
 #[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ArmLevel {

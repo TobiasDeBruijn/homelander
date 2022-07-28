@@ -6,15 +6,15 @@ use serde::{Deserialize, Serialize};
 pub struct ColorModelSupport {
     /// Full spectrum color model supported by the device.
     #[serde(rename = "colorModel")]
-    color_model: Option<ColorModel>,
+    pub color_model: Option<ColorModel>,
     /// Supported color temperature range in Kelvin.
     #[serde(rename = "colorTemperatureRange")]
-    color_temperature_range: Option<ColorTemperature>,
+    pub color_temperature_range: Option<ColorTemperatureRange>,
 }
 
 /// Supported color temperature range in Kelvin.
 #[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
-pub struct ColorTemperature {
+pub struct ColorTemperatureRange {
     /// Minimum supported color temperature in Kelvin.
     #[serde(rename = "temperatureMinK")]
     pub temperature_min_k: i32,

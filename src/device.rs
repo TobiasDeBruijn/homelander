@@ -1,3 +1,4 @@
+use std::error::Error;
 use crate::device_trait::Trait;
 use crate::device_type::DeviceType;
 use crate::execute_error::ExecuteError;
@@ -22,6 +23,7 @@ use crate::traits::{
     TemperatureControl, TemperatureSetting, Timer, TransportControl, Volume,
 };
 use crate::{fulfillment, ArmDisarm, Brightness, ColorSetting, CommandOutput, CommandStatus, CommandType, GoogleHomeDevice, SerializableError};
+use crate::traits::arm_disarm::AvailableArmLevels;
 
 pub struct Device<T: GoogleHomeDevice + Clone + Send + Sync + ?Sized + 'static> {
     pub(crate) id: String,
@@ -42,11 +44,13 @@ impl<T: GoogleHomeDevice + Clone + Send + Sync + ?Sized + 'static> Device<T> {
         }
     }
 
-    pub(crate) fn sync(&self) -> fulfillment::response::sync::Device {
+    pub(crate) fn sync(&self) -> Result<fulfillment::response::sync::Device, Box<dyn Error>> {
         let name = self.inner.get_device_name();
         let info = self.inner.get_device_info();
 
-        fulfillment::response::sync::Device {
+
+
+        Ok(fulfillment::response::sync::Device {
             id: self.id.clone(),
             device_type: self.device_type.as_device_type_string(),
             traits: self.traits.clone(),
@@ -63,7 +67,119 @@ impl<T: GoogleHomeDevice + Clone + Send + Sync + ?Sized + 'static> Device<T> {
                 hw_version: info.hw,
                 sw_version: info.sw,
             },
+            attributes: self.sync_set_attributes()?
+        })
+    }
+
+    fn sync_set_attributes(&self) -> Result<fulfillment::response::sync::SyncAttributes, Box<dyn Error>> {
+        let mut attributes = fulfillment::response::sync::SyncAttributes::default();
+
+        // TODO appselector
+
+        if let Some(d) = &self.device_traits.arm_disarm {
+            attributes.available_arm_levels = Some(AvailableArmLevels {
+                levels: d.get_available_arm_levels()?,
+                ordered: d.is_ordered()?
+            });
         }
+
+        if let Some(d) = &self.device_traits.brightness {
+            attributes.command_only_brightness = Some(d.is_command_only_brightness()?);
+        }
+
+        // TODO camerastream
+        // TODO channel
+
+        if let Some(d) = &self.device_traits.color_setting {
+            attributes.command_only_color_setting = Some(d.is_command_only_color_setting()?);
+            let support = d.get_color_model_support()?;
+            attributes.color_model = support.color_model;
+            attributes.color_temperature_range = support.color_temperature_range;
+        }
+
+        if let Some(d) = &self.device_traits.cook {
+            attributes.supported_cooking_modes = Some(d.get_supported_cooking_modes()?);
+            attributes.food_presets = Some(d.get_food_presets()?);
+        }
+
+        if let Some(d) = &self.device_traits.dispense {
+            attributes.supported_dispense_items = Some(d.get_supported_dispense_items()?);
+            attributes.supported_dispense_presets = Some(d.get_supported_dispense_presets()?);
+        }
+
+        // Dock has no attributes
+
+        if let Some(d) = &self.device_traits.energy_storage {
+            attributes.query_only_energy_storage = Some(d.is_query_only()?);
+            attributes.energy_storage_distance_unit_for_ux = Some(d.get_distance_unit_for_ux()?);
+            attributes.is_rechargeable = Some(d.is_rechargable()?);
+        }
+
+        if let Some(d) = &self.device_traits.fan_speed {
+            attributes.reversible = d.is_reversable()?;
+            attributes.command_only_fan_speed = d.is_command_only_fan_speed()?;
+            attributes.available_fan_speeds = d.get_available_fan_speeds()?;
+            attributes.supports_fan_speed_percent = d.is_support_fan_speed_percent()?;
+        }
+
+        if let Some(d) = &self.device_traits.fill {
+            attributes.available_fill_levels = Some(d.get_available_fill_levels()?);
+        }
+
+        if let Some(d) = &self.device_traits.humidity_setting {
+            attributes.humidity_set_point_range = d.get_humidity_set_point_range_minmax()?;
+            attributes.command_only_humidity_setting = d.is_command_only_humidity_settings()?;
+            attributes.query_only_humidity_setting = d.is_query_only_humidity_setting()?;
+        }
+
+        if let Some(d) = &self.device_traits.input_selector {
+            attributes.available_inputs = Some(d.get_available_inputs()?);
+            attributes.command_only_input_selector = d.is_command_only_input_selector()?;
+            attributes.ordered_inputs = d.has_ordered_inputs()?;
+        }
+
+        if let Some(d) = &self.device_traits.light_effects {
+            attributes.default_color_loop_duration = d.get_default_color_loop_duration()?;
+            attributes.default_sleep_duration = d.get_default_sleep_duration()?;
+            attributes.default_wake_duration = d.get_default_wake_duration()?;
+            attributes.supported_effects = Some(d.get_supported_effects()?);
+        }
+
+        // Locator has no attributes
+        // LockUnlock has no attributes
+
+        if let Some(d) = &self.device_traits.media_state {
+            attributes.support_activity_state = d.does_support_activity_state()?;
+            attributes.support_playback_state = d.does_support_playback_state()?;
+        }
+
+        if let Some(d) = &self.device_traits.modes {
+            attributes.available_modes = Some(d.get_available_modes()?);
+            attributes.command_only_modes = d.is_command_only_modes()?;
+            attributes.query_only_modes = d.is_query_only_modes()?;
+        }
+
+        if let Some(d) = &self.device_traits.network_control {
+            attributes.network_profiles = d.get_network_profiles()?;
+            attributes.supports_enabling_guest_network = d.supports_disabling_guest_network()?;
+            attributes.supports_disabling_guest_network = d.supports_disabling_guest_network()?;
+            attributes.supports_getting_guest_network_password = d.supports_getting_guest_network_password()?;
+            attributes.supports_enabling_network_profile = d.supports_enabling_network_profile()?;
+            attributes.supports_disabling_network_profile = d.supports_disabling_network_profile()?;
+            attributes.supports_network_download_speed_test = d.supports_network_download_speed_test()?;
+            attributes.supports_network_upload_speed_test = d.supports_network_upload_speed_test()?;
+        }
+
+        // ObjectDetection has no attributes
+
+        if let Some(d) = &self.device_traits.on_off {
+            attributes.command_only_on_off = d.is_command_only()?;
+            attributes.query_only_on_off = d.is_query_only()?;
+        }
+
+        // TODO the rest of the traits
+
+        Ok(attributes)
     }
 
     pub(crate) fn execute(&mut self, command: CommandType) -> CommandOutput {

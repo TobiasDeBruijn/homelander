@@ -38,7 +38,7 @@ pub enum CookingMode {
 }
 
 /// Food preset.
-#[derive(Serialize)]
+#[derive(Debug, Serialize)]
 pub struct FoodPreset {
     /// Internal name of the food preset, which will be used in commands and states. This name can be non-user-friendly, and is shared across all languages.
     pub food_preset_name: String,

@@ -1,3 +1,4 @@
+use std::error::Error;
 use crate::fulfillment::request::execute::CommandType;
 use crate::traits::arm_disarm::ArmDisarm;
 use crate::traits::brightness::Brightness;
@@ -103,11 +104,34 @@ impl<T: GoogleHomeDevice + Clone + Send + Sync + 'static> Homelander<T> {
     }
 
     fn sync(&self) -> fulfillment::response::sync::Payload {
-        let devices = self.devices.iter().map(|x| x.sync()).collect::<Vec<_>>();
+        let devices = self.devices.iter()
+            .map(|x| x.sync())
+            .collect::<Result<Vec<_>, Box<dyn Error>>>();
 
+        struct PayloadContent {
+            devices: Vec<fulfillment::response::sync::Device>,
+            error_code: Option<String>,
+            debug_string: Option<String,>
+        }
+
+        let content = match devices {
+            Ok(d) => PayloadContent {
+                devices: d,
+                error_code: None,
+                debug_string: None,
+            },
+            Err(e) => PayloadContent {
+                devices: Vec::with_capacity(0),
+                error_code: Some("deviceOffline".to_string()),
+                debug_string: Some(e.to_string())
+            }
+        };
+        
         fulfillment::response::sync::Payload {
             agent_user_id: self.agent_user_id.clone(),
-            devices,
+            devices: content.devices,
+            error_code: content.error_code,
+            debug_string: content.debug_string,
         }
     }
 

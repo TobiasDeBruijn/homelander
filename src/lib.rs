@@ -62,7 +62,7 @@
 //! }
 //!
 //! // Create the device
-//! let mut device = Device::new(Arc::new(Mutex::new(MyDevice(false))), DeviceType::Outlet, "my_id".to_string());
+//! let mut device = Device::new(MyDevice(false), DeviceType::Outlet, "my_id".to_string());
 //! // Register the OnOff traitr
 //! device.set_on_off();
 //!
@@ -74,14 +74,16 @@
 //! This route should take a JSON payload: [Request]. This request can then be passed to Homelander:
 //! ```
 //! # use std::sync::{Arc, Mutex};
-//! # use homelander::{Device, DeviceTraits, DeviceType, Homelander};
-//! # use homelander::traits::{DeviceInfo, DeviceName, GoogleHomeDevice};
+//! # use homelander::{Device, DeviceTraits, DeviceType, Homelander, Request};
+//! use homelander::fulfillment::request::Input;
+//! # use homelander::traits::{CombinedDeviceError, DeviceInfo, DeviceName, GoogleHomeDevice};
+//! use homelander::traits::on_off::OnOff;
 //! #
 //! # fn get_homelander(_: String) -> Homelander {
 //! #    let mut homelander = Homelander::new("my_user_id".to_string());
-//! #    let mut device = Device::new(Arc::new(Mutex::new(MyDevice(false))), DeviceType::Outlet, "my_id".to_string());
+//! #    let mut device = Device::new(MyDevice(false), DeviceType::Outlet, "my_id".to_string());
 //! #    device.set_on_off();
-//! #    homelander.add_device(device as Device<dyn DeviceTraits>);
+//! #    homelander.add_device(device);
 //! #    homelander
 //! # }
 //! # #[derive(Clone)]
@@ -113,13 +115,33 @@
 //! #           true
 //! #    }
 //! # }
+//! #
+//! # impl OnOff for MyDevice {
+//! #    fn is_on(&self) -> Result<bool, CombinedDeviceError> {
+//! #        Ok(self.0)
+//! #    }
+//! #
+//! #    fn set_on(&mut self, on: bool) -> Result<(), CombinedDeviceError> {
+//! #        self.0 = on;
+//! #        Ok(())
+//! #    }
+//! # }
+//! #
+//! # fn get_incoming_request() -> Request {
+//! #    Request {
+//! #        request_id: String::default(),
+//! #        inputs: vec![
+//! #            Input::Sync
+//! #        ]
+//! #    }
+//! # }
 //!
 //! // Retrieve the Homelander for the user,
 //! // The user can be identified through the OAuth2 token provided by Google
 //! let mut homelander = get_homelander("my_user_id".to_string());
 //! // Let homelander handle the request and create a response
 //! // The response can then be returned to Google as JSON
-//! let response = homelander.handle_request(request);
+//! let response = homelander.handle_request(get_incoming_request());
 //! ```
 //!
 
@@ -135,7 +157,7 @@ mod device_trait;
 mod device_type;
 mod execute_error;
 #[doc(hidden)]
-mod fulfillment;
+pub mod fulfillment;
 mod serializable_error;
 pub mod traits;
 
@@ -165,7 +187,7 @@ impl<T: GoogleHomeDevice + Send + Sync + 'static> DeviceTraits for T {}
 /// Keeps track of all devices owned by a specific user.
 pub struct Homelander {
     agent_user_id: String,
-    devices: Vec<Device<dyn DeviceTraits>>,
+    devices: Vec<Device<dyn crate::DeviceTraits>>,
 }
 
 impl Homelander {
@@ -177,8 +199,8 @@ impl Homelander {
     }
 
     /// Add a device
-    pub fn add_device(&mut self, device: Device<dyn DeviceTraits>) {
-        self.devices.push(device);
+    pub fn add_device<T: DeviceTraits>(&mut self, device: Device<T>) {
+        self.devices.push(device.unsize());
     }
 
     /// Remove a device with ID `id`
@@ -327,79 +349,88 @@ impl Homelander {
 
 #[cfg(test)]
 mod test {
-    use std::sync::{Arc, Mutex};
     use crate::device_type::DeviceType;
     use crate::traits::arm_disarm::{ArmDisarmError, ArmLevel};
     use crate::traits::{DeviceInfo, DeviceName, GoogleHomeDevice};
-    use crate::{ArmDisarm, CommandType, Device};
+    use crate::{ArmDisarm, CommandType, Device, Homelander};
+
+    #[derive(Clone)]
+    struct Foo;
+
+    impl GoogleHomeDevice for Foo {
+        fn get_device_info(&self) -> DeviceInfo {
+            DeviceInfo {
+                manufacturer: String::default(),
+                model: String::default(),
+                hw: String::default(),
+                sw: String::default(),
+            }
+        }
+
+        fn will_report_state(&self) -> bool {
+            false
+        }
+
+        fn get_device_name(&self) -> DeviceName {
+            DeviceName {
+                nicknames: Vec::new(),
+                default_names: Vec::new(),
+                name: String::default(),
+            }
+        }
+
+        fn is_online(&self) -> bool {
+            true
+        }
+    }
+
+    impl ArmDisarm for Foo {
+        fn get_available_arm_levels(&self) -> Result<Option<Vec<ArmLevel>>, ArmDisarmError> {
+            Ok(None)
+        }
+
+        fn is_ordered(&self) -> Result<bool, ArmDisarmError> {
+            Ok(true)
+        }
+
+        fn is_armed(&self) -> Result<bool, ArmDisarmError> {
+            Ok(true)
+        }
+
+        fn current_arm_level(&self) -> Result<String, ArmDisarmError> {
+            Ok(String::default())
+        }
+
+        fn exit_allowance(&self) -> Result<i32, ArmDisarmError> {
+            Ok(0)
+        }
+
+        fn arm(&mut self, _arm: bool) -> Result<(), ArmDisarmError> {
+            Ok(())
+        }
+
+        fn cancel_arm(&mut self) -> Result<(), ArmDisarmError> {
+            Ok(())
+        }
+
+        fn arm_with_level(&mut self, _arm: bool, _level: String) -> Result<(), ArmDisarmError> {
+            Ok(())
+        }
+    }
+
+    #[test]
+    fn add_device() {
+        let mut device = Device::new(Foo, DeviceType::AcUnit, String::default());
+        device.set_arm_disarm();
+
+        let mut homelander = Homelander::new(String::default());
+        homelander.add_device(device);
+    }
 
     #[test]
     fn test_dynamic_traits() {
-        #[derive(Clone)]
-        struct Foo;
 
-        impl GoogleHomeDevice for Foo {
-            fn get_device_info(&self) -> DeviceInfo {
-                DeviceInfo {
-                    manufacturer: String::default(),
-                    model: String::default(),
-                    hw: String::default(),
-                    sw: String::default(),
-                }
-            }
-
-            fn will_report_state(&self) -> bool {
-                false
-            }
-
-            fn get_device_name(&self) -> DeviceName {
-                DeviceName {
-                    nicknames: Vec::new(),
-                    default_names: Vec::new(),
-                    name: String::default(),
-                }
-            }
-
-            fn is_online(&self) -> bool {
-                true
-            }
-        }
-
-        impl ArmDisarm for Foo {
-            fn get_available_arm_levels(&self) -> Result<Option<Vec<ArmLevel>>, ArmDisarmError> {
-                Ok(None)
-            }
-
-            fn is_ordered(&self) -> Result<bool, ArmDisarmError> {
-                Ok(true)
-            }
-
-            fn is_armed(&self) -> Result<bool, ArmDisarmError> {
-                Ok(true)
-            }
-
-            fn current_arm_level(&self) -> Result<String, ArmDisarmError> {
-                Ok(String::default())
-            }
-
-            fn exit_allowance(&self) -> Result<i32, ArmDisarmError> {
-                Ok(0)
-            }
-
-            fn arm(&mut self, _arm: bool) -> Result<(), ArmDisarmError> {
-                Ok(())
-            }
-
-            fn cancel_arm(&mut self) -> Result<(), ArmDisarmError> {
-                Ok(())
-            }
-
-            fn arm_with_level(&mut self, _arm: bool, _level: String) -> Result<(), ArmDisarmError> {
-                Ok(())
-            }
-        }
-
-        let mut device = Device::new(Arc::new(Mutex::new(Foo)), DeviceType::AcUnit, String::default());
+        let mut device = Device::new(Foo, DeviceType::AcUnit, String::default());
         device.set_arm_disarm();
         device.execute(CommandType::ArmDisarm {
             arm: true,

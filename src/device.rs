@@ -1,5 +1,6 @@
+use std::cell::RefCell;
 use std::error::Error;
-use std::sync::{Arc, Mutex};
+use std::rc::Rc;
 use crate::device_trait::Trait;
 use crate::device_type::DeviceType;
 use crate::execute_error::ExecuteError;
@@ -24,26 +25,33 @@ use crate::traits::on_off::OnOff;
 use crate::traits::arm_disarm::AvailableArmLevels;
 
 /// A Google Home device with its traits
-pub struct Device<T: GoogleHomeDevice + Send + Sync + ?Sized + 'static> {
+pub struct Device<T: GoogleHomeDevice + Send + ?Sized + Sync + 'static> {
     pub(crate) id: String,
     device_type: DeviceType,
-    inner: Arc<Mutex<T>>,
     device_traits: DeviceTraits,
     traits: Vec<Trait>,
+    inner: Rc<RefCell<T>>,
 }
 
-impl<T: GoogleHomeDevice + Send + Sync + ?Sized + 'static> Device<T> {
-    /// Create a new ID. Note that the `id` has to be persistent.
-    pub fn new(device: Arc<Mutex<T>>, device_type: DeviceType, id: String) -> Self {
+impl<T: GoogleHomeDevice + Send + Sync + 'static> Device<T> {
+    pub(crate) fn unsize(self) -> Device<dyn crate::DeviceTraits> {
+        let Self { id, device_type, device_traits, traits, inner } = self;
+        Device { id, device_type, device_traits, traits, inner }
+    }
 
+    /// Create a new ID. Note that the `id` has to be persistent.
+    pub fn new(device: T, device_type: DeviceType, id: String) -> Self {
         Self {
             id,
             device_type,
-            inner: device,
             device_traits: DeviceTraits::default(),
             traits: Vec::new(),
+            inner: Rc::new(RefCell::new(device)),
         }
     }
+}
+
+impl<T: GoogleHomeDevice + Send + Sync + ?Sized + 'static> Device<T> {
 
     /// Execute the QUERY intent
     pub(crate) fn query(&self) -> fulfillment::response::query::QueryDeviceState {
@@ -54,14 +62,14 @@ impl<T: GoogleHomeDevice + Send + Sync + ?Sized + 'static> Device<T> {
                 required: fulfillment::response::query::RequiredQueryDeviceState {
                     status: fulfillment::response::query::QueryStatus::Error,
                     on: false,
-                    online: self.inner.lock().unwrap().is_online(),
+                    online: self.inner.borrow().is_online(),
                     error_code: Some(e.to_string()),
                 },
                 traits: None
             }
         };
 
-        if !self.inner.lock().unwrap().is_online() {
+        if !self.inner.borrow().is_online() {
             return fulfillment::response::query::QueryDeviceState {
                 required: fulfillment::response::query::RequiredQueryDeviceState {
                     status: fulfillment::response::query::QueryStatus::Offline,
@@ -91,8 +99,8 @@ impl<T: GoogleHomeDevice + Send + Sync + ?Sized + 'static> Device<T> {
 
     /// Execute the SYNC intent
     pub(crate) fn sync(&self) -> Result<fulfillment::response::sync::Device, Box<dyn Error>> {
-        let name = self.inner.lock().unwrap().get_device_name();
-        let info = self.inner.lock().unwrap().get_device_info();
+        let name = self.inner.borrow().get_device_name();
+        let info = self.inner.borrow().get_device_info();
 
 
 
@@ -105,8 +113,8 @@ impl<T: GoogleHomeDevice + Send + Sync + ?Sized + 'static> Device<T> {
                 default_names: name.default_names,
                 nicknames: name.nicknames,
             },
-            will_report_state: self.inner.lock().unwrap().will_report_state(),
-            room_hint: self.inner.lock().unwrap().get_room_hint(),
+            will_report_state: self.inner.borrow().will_report_state(),
+            room_hint: self.inner.borrow().get_room_hint(),
             device_info: fulfillment::response::sync::DeviceInfo {
                 manufacturer: info.manufacturer,
                 model: info.model,
@@ -125,103 +133,103 @@ impl<T: GoogleHomeDevice + Send + Sync + ?Sized + 'static> Device<T> {
 
         if let Some(d) = &self.device_traits.arm_disarm {
             attributes.available_arm_levels = Some(AvailableArmLevels {
-                levels: d.lock().unwrap().get_available_arm_levels()?,
-                ordered: d.lock().unwrap().is_ordered()?
+                levels: d.borrow().get_available_arm_levels()?,
+                ordered: d.borrow().is_ordered()?
             });
         }
 
         if let Some(d) = &self.device_traits.brightness {
-            attributes.command_only_brightness = Some(d.lock().unwrap().is_command_only_brightness()?);
+            attributes.command_only_brightness = Some(d.borrow().is_command_only_brightness()?);
         }
 
         // TODO camerastream
         // TODO channel
 
         if let Some(d) = &self.device_traits.color_setting {
-            attributes.command_only_color_setting = Some(d.lock().unwrap().is_command_only_color_setting()?);
-            let support = d.lock().unwrap().get_color_model_support()?;
+            attributes.command_only_color_setting = Some(d.borrow().is_command_only_color_setting()?);
+            let support = d.borrow().get_color_model_support()?;
             attributes.color_model = support.color_model;
             attributes.color_temperature_range = support.color_temperature_range;
         }
 
         if let Some(d) = &self.device_traits.cook {
-            attributes.supported_cooking_modes = Some(d.lock().unwrap().get_supported_cooking_modes()?);
-            attributes.food_presets = Some(d.lock().unwrap().get_food_presets()?);
+            attributes.supported_cooking_modes = Some(d.borrow().get_supported_cooking_modes()?);
+            attributes.food_presets = Some(d.borrow().get_food_presets()?);
         }
 
         if let Some(d) = &self.device_traits.dispense {
-            attributes.supported_dispense_items = Some(d.lock().unwrap().get_supported_dispense_items()?);
-            attributes.supported_dispense_presets = Some(d.lock().unwrap().get_supported_dispense_presets()?);
+            attributes.supported_dispense_items = Some(d.borrow().get_supported_dispense_items()?);
+            attributes.supported_dispense_presets = Some(d.borrow().get_supported_dispense_presets()?);
         }
 
         // Dock has no attributes
 
         if let Some(d) = &self.device_traits.energy_storage {
-            attributes.query_only_energy_storage = Some(d.lock().unwrap().is_query_only()?);
-            attributes.energy_storage_distance_unit_for_ux = Some(d.lock().unwrap().get_distance_unit_for_ux()?);
-            attributes.is_rechargeable = Some(d.lock().unwrap().is_rechargable()?);
+            attributes.query_only_energy_storage = Some(d.borrow().is_query_only()?);
+            attributes.energy_storage_distance_unit_for_ux = Some(d.borrow().get_distance_unit_for_ux()?);
+            attributes.is_rechargeable = Some(d.borrow().is_rechargable()?);
         }
 
         if let Some(d) = &self.device_traits.fan_speed {
-            attributes.reversible = d.lock().unwrap().is_reversable()?;
-            attributes.command_only_fan_speed = d.lock().unwrap().is_command_only_fan_speed()?;
-            attributes.available_fan_speeds = d.lock().unwrap().get_available_fan_speeds()?;
-            attributes.supports_fan_speed_percent = d.lock().unwrap().is_support_fan_speed_percent()?;
+            attributes.reversible = d.borrow().is_reversable()?;
+            attributes.command_only_fan_speed = d.borrow().is_command_only_fan_speed()?;
+            attributes.available_fan_speeds = d.borrow().get_available_fan_speeds()?;
+            attributes.supports_fan_speed_percent = d.borrow().is_support_fan_speed_percent()?;
         }
 
         if let Some(d) = &self.device_traits.fill {
-            attributes.available_fill_levels = Some(d.lock().unwrap().get_available_fill_levels()?);
+            attributes.available_fill_levels = Some(d.borrow().get_available_fill_levels()?);
         }
 
         if let Some(d) = &self.device_traits.humidity_setting {
-            attributes.humidity_set_point_range = d.lock().unwrap().get_humidity_set_point_range_minmax()?;
-            attributes.command_only_humidity_setting = d.lock().unwrap().is_command_only_humidity_settings()?;
-            attributes.query_only_humidity_setting = d.lock().unwrap().is_query_only_humidity_setting()?;
+            attributes.humidity_set_point_range = d.borrow().get_humidity_set_point_range_minmax()?;
+            attributes.command_only_humidity_setting = d.borrow().is_command_only_humidity_settings()?;
+            attributes.query_only_humidity_setting = d.borrow().is_query_only_humidity_setting()?;
         }
 
         if let Some(d) = &self.device_traits.input_selector {
-            attributes.available_inputs = Some(d.lock().unwrap().get_available_inputs()?);
-            attributes.command_only_input_selector = d.lock().unwrap().is_command_only_input_selector()?;
-            attributes.ordered_inputs = d.lock().unwrap().has_ordered_inputs()?;
+            attributes.available_inputs = Some(d.borrow().get_available_inputs()?);
+            attributes.command_only_input_selector = d.borrow().is_command_only_input_selector()?;
+            attributes.ordered_inputs = d.borrow().has_ordered_inputs()?;
         }
 
         if let Some(d) = &self.device_traits.light_effects {
-            attributes.default_color_loop_duration = d.lock().unwrap().get_default_color_loop_duration()?;
-            attributes.default_sleep_duration = d.lock().unwrap().get_default_sleep_duration()?;
-            attributes.default_wake_duration = d.lock().unwrap().get_default_wake_duration()?;
-            attributes.supported_effects = Some(d.lock().unwrap().get_supported_effects()?);
+            attributes.default_color_loop_duration = d.borrow().get_default_color_loop_duration()?;
+            attributes.default_sleep_duration = d.borrow().get_default_sleep_duration()?;
+            attributes.default_wake_duration = d.borrow().get_default_wake_duration()?;
+            attributes.supported_effects = Some(d.borrow().get_supported_effects()?);
         }
 
         // Locator has no attributes
         // LockUnlock has no attributes
 
         if let Some(d) = &self.device_traits.media_state {
-            attributes.support_activity_state = d.lock().unwrap().does_support_activity_state()?;
-            attributes.support_playback_state = d.lock().unwrap().does_support_playback_state()?;
+            attributes.support_activity_state = d.borrow().does_support_activity_state()?;
+            attributes.support_playback_state = d.borrow().does_support_playback_state()?;
         }
 
         if let Some(d) = &self.device_traits.modes {
-            attributes.available_modes = Some(d.lock().unwrap().get_available_modes()?);
-            attributes.command_only_modes = d.lock().unwrap().is_command_only_modes()?;
-            attributes.query_only_modes = d.lock().unwrap().is_query_only_modes()?;
+            attributes.available_modes = Some(d.borrow().get_available_modes()?);
+            attributes.command_only_modes = d.borrow().is_command_only_modes()?;
+            attributes.query_only_modes = d.borrow().is_query_only_modes()?;
         }
 
         if let Some(d) = &self.device_traits.network_control {
-            attributes.network_profiles = d.lock().unwrap().get_network_profiles()?;
-            attributes.supports_enabling_guest_network = d.lock().unwrap().supports_disabling_guest_network()?;
-            attributes.supports_disabling_guest_network = d.lock().unwrap().supports_disabling_guest_network()?;
-            attributes.supports_getting_guest_network_password = d.lock().unwrap().supports_getting_guest_network_password()?;
-            attributes.supports_enabling_network_profile = d.lock().unwrap().supports_enabling_network_profile()?;
-            attributes.supports_disabling_network_profile = d.lock().unwrap().supports_disabling_network_profile()?;
-            attributes.supports_network_download_speed_test = d.lock().unwrap().supports_network_download_speed_test()?;
-            attributes.supports_network_upload_speed_test = d.lock().unwrap().supports_network_upload_speed_test()?;
+            attributes.network_profiles = d.borrow().get_network_profiles()?;
+            attributes.supports_enabling_guest_network = d.borrow().supports_disabling_guest_network()?;
+            attributes.supports_disabling_guest_network = d.borrow().supports_disabling_guest_network()?;
+            attributes.supports_getting_guest_network_password = d.borrow().supports_getting_guest_network_password()?;
+            attributes.supports_enabling_network_profile = d.borrow().supports_enabling_network_profile()?;
+            attributes.supports_disabling_network_profile = d.borrow().supports_disabling_network_profile()?;
+            attributes.supports_network_download_speed_test = d.borrow().supports_network_download_speed_test()?;
+            attributes.supports_network_upload_speed_test = d.borrow().supports_network_upload_speed_test()?;
         }
 
         // ObjectDetection has no attributes
 
         if let Some(d) = &self.device_traits.on_off {
-            attributes.command_only_on_off = d.lock().unwrap().is_command_only()?;
-            attributes.query_only_on_off = d.lock().unwrap().is_query_only()?;
+            attributes.command_only_on_off = d.borrow().is_command_only()?;
+            attributes.query_only_on_off = d.borrow().is_query_only()?;
         }
 
         // TODO the rest of the traits
@@ -273,13 +281,13 @@ impl<T: GoogleHomeDevice + Send + Sync + ?Sized + 'static> Device<T> {
 
                 if let Some(cancel) = cancel {
                     if cancel {
-                        device.lock().unwrap().cancel_arm()?;
+                        device.borrow_mut().cancel_arm()?;
                     }
                 } else {
                     if let Some(level) = arm_level {
-                        device.lock().unwrap().arm_with_level(arm, level)?;
+                        device.borrow_mut().arm_with_level(arm, level)?;
                     } else {
-                        device.lock().unwrap().arm(arm)?;
+                        device.borrow_mut().arm(arm)?;
                     }
                 }
             }
@@ -289,7 +297,7 @@ impl<T: GoogleHomeDevice + Send + Sync + ?Sized + 'static> Device<T> {
                     None => panic!("Unsupported"),
                 };
 
-                device.lock().unwrap().set_brightness_absolute(brightness)?;
+                device.borrow_mut().set_brightness_absolute(brightness)?;
             }
             CommandType::BrightnessRelative {
                 brightness_relative_percent,
@@ -301,11 +309,11 @@ impl<T: GoogleHomeDevice + Send + Sync + ?Sized + 'static> Device<T> {
                 };
 
                 if let Some(brightness_relative_percent) = brightness_relative_percent {
-                    device.lock().unwrap().set_brightness_relative_percent(brightness_relative_percent)?;
+                    device.borrow_mut().set_brightness_relative_percent(brightness_relative_percent)?;
                 }
 
                 if let Some(brightness_relative_weight) = brightness_relative_weight {
-                    device.lock().unwrap().set_brightness_relative_weight(brightness_relative_weight)?;
+                    device.borrow_mut().set_brightness_relative_weight(brightness_relative_weight)?;
                 }
             }
             // TODO CameraStream
@@ -316,7 +324,7 @@ impl<T: GoogleHomeDevice + Send + Sync + ?Sized + 'static> Device<T> {
                     None => panic!("Unsupported"),
                 };
 
-                device.lock().unwrap().set_color(color)?;
+                device.borrow_mut().set_color(color)?;
             }
             CommandType::Cook {
                 start,
@@ -331,14 +339,14 @@ impl<T: GoogleHomeDevice + Send + Sync + ?Sized + 'static> Device<T> {
                 };
 
                 if start {
-                    device.lock().unwrap().start(CookingConfig {
+                    device.borrow_mut().start(CookingConfig {
                         cooking_mode,
                         food_preset,
                         quantity,
                         unit,
                     })?;
                 } else {
-                    device.lock().unwrap().stop()?;
+                    device.borrow_mut().stop()?;
                 }
             }
             CommandType::Dispense {
@@ -358,11 +366,11 @@ impl<T: GoogleHomeDevice + Send + Sync + ?Sized + 'static> Device<T> {
                     let unit = unit.unwrap();
                     let amount = amount.unwrap();
 
-                    device.lock().unwrap().dispense_amount(item, amount, unit)?;
+                    device.borrow_mut().dispense_amount(item, amount, unit)?;
                 } else if let Some(preset_name) = preset_name {
-                    device.lock().unwrap().dispense_preset(preset_name)?;
+                    device.borrow_mut().dispense_preset(preset_name)?;
                 } else {
-                    device.lock().unwrap().dispense_default()?;
+                    device.borrow_mut().dispense_default()?;
                 }
             }
             CommandType::Dock => {
@@ -371,7 +379,7 @@ impl<T: GoogleHomeDevice + Send + Sync + ?Sized + 'static> Device<T> {
                     None => panic!("Unsupported"),
                 };
 
-                device.lock().unwrap().dock()?;
+                device.borrow_mut().dock()?;
             }
             CommandType::Charge { charge } => {
                 let device = match &mut self.device_traits.energy_storage {
@@ -379,7 +387,7 @@ impl<T: GoogleHomeDevice + Send + Sync + ?Sized + 'static> Device<T> {
                     None => panic!("Unsupported"),
                 };
 
-                device.lock().unwrap().charge(charge)?;
+                device.borrow_mut().charge(charge)?;
             }
             CommandType::SetFanSpeed { fan_speed, fan_speed_percent } => {
                 let device = match &mut self.device_traits.fan_speed {
@@ -388,9 +396,9 @@ impl<T: GoogleHomeDevice + Send + Sync + ?Sized + 'static> Device<T> {
                 };
 
                 if let Some(fan_speed) = fan_speed {
-                    device.lock().unwrap().set_fan_speed_setting(fan_speed)?;
+                    device.borrow_mut().set_fan_speed_setting(fan_speed)?;
                 } else if let Some(fan_speed_percent) = fan_speed_percent {
-                    device.lock().unwrap().set_fan_speed_percent(fan_speed_percent)?;
+                    device.borrow_mut().set_fan_speed_percent(fan_speed_percent)?;
                 }
             }
             CommandType::SetFanSpeedRelative {
@@ -403,9 +411,9 @@ impl<T: GoogleHomeDevice + Send + Sync + ?Sized + 'static> Device<T> {
                 };
 
                 if let Some(weight) = fan_speed_relative_weight {
-                    device.lock().unwrap().set_fan_speed_relative_weight(weight)?;
+                    device.borrow_mut().set_fan_speed_relative_weight(weight)?;
                 } else if let Some(percent) = fan_speed_relative_percent {
-                    device.lock().unwrap().set_fan_speed_relative_percent(percent)?;
+                    device.borrow_mut().set_fan_speed_relative_percent(percent)?;
                 }
             }
             CommandType::Reverse => {
@@ -414,7 +422,7 @@ impl<T: GoogleHomeDevice + Send + Sync + ?Sized + 'static> Device<T> {
                     None => panic!("Unsupported"),
                 };
 
-                device.lock().unwrap().set_fan_reverse()?;
+                device.borrow_mut().set_fan_reverse()?;
             }
             CommandType::Fill {
                 fill,
@@ -427,11 +435,11 @@ impl<T: GoogleHomeDevice + Send + Sync + ?Sized + 'static> Device<T> {
                 };
 
                 if let Some(fill_level) = fill_level {
-                    device.lock().unwrap().fill_to_level(fill_level)?;
+                    device.borrow_mut().fill_to_level(fill_level)?;
                 } else if let Some(fill_percent) = fill_percent {
-                    device.lock().unwrap().fill_to_percent(fill_percent)?;
+                    device.borrow_mut().fill_to_percent(fill_percent)?;
                 } else {
-                    device.lock().unwrap().fill(fill)?;
+                    device.borrow_mut().fill(fill)?;
                 }
             }
             CommandType::SetInput { new_input } => {
@@ -440,7 +448,7 @@ impl<T: GoogleHomeDevice + Send + Sync + ?Sized + 'static> Device<T> {
                     None => panic!("Unsupported"),
                 };
 
-                device.lock().unwrap().set_input(new_input)?;
+                device.borrow_mut().set_input(new_input)?;
             }
             CommandType::NextInput => {
                 let device = match &mut self.device_traits.input_selector {
@@ -448,7 +456,7 @@ impl<T: GoogleHomeDevice + Send + Sync + ?Sized + 'static> Device<T> {
                     None => panic!("Unsupported"),
                 };
 
-                device.lock().unwrap().set_next_input()?;
+                device.borrow_mut().set_next_input()?;
             }
             CommandType::PreviousInput => {
                 let device = match &mut self.device_traits.input_selector {
@@ -456,7 +464,7 @@ impl<T: GoogleHomeDevice + Send + Sync + ?Sized + 'static> Device<T> {
                     None => panic!("Unsupported"),
                 };
 
-                device.lock().unwrap().set_previous_input()?;
+                device.borrow_mut().set_previous_input()?;
             }
             CommandType::ColorLoop { duration } => {
                 let device = match &mut self.device_traits.light_effects {
@@ -464,7 +472,7 @@ impl<T: GoogleHomeDevice + Send + Sync + ?Sized + 'static> Device<T> {
                     None => panic!("Unsupported"),
                 };
 
-                device.lock().unwrap().set_color_loop(duration)?;
+                device.borrow_mut().set_color_loop(duration)?;
             }
             CommandType::Sleep { duration } => {
                 let device = match &mut self.device_traits.light_effects {
@@ -472,7 +480,7 @@ impl<T: GoogleHomeDevice + Send + Sync + ?Sized + 'static> Device<T> {
                     None => panic!("Unsupported"),
                 };
 
-                device.lock().unwrap().set_sleep(duration)?;
+                device.borrow_mut().set_sleep(duration)?;
             }
             CommandType::StopEffect => {
                 let device = match &mut self.device_traits.light_effects {
@@ -480,7 +488,7 @@ impl<T: GoogleHomeDevice + Send + Sync + ?Sized + 'static> Device<T> {
                     None => panic!("Unsupported"),
                 };
 
-                device.lock().unwrap().stop_effect()?;
+                device.borrow_mut().stop_effect()?;
             }
             CommandType::Wake { duration } => {
                 let device = match &mut self.device_traits.light_effects {
@@ -488,7 +496,7 @@ impl<T: GoogleHomeDevice + Send + Sync + ?Sized + 'static> Device<T> {
                     None => panic!("Unsupported"),
                 };
 
-                device.lock().unwrap().set_wake(duration)?;
+                device.borrow_mut().set_wake(duration)?;
             }
             CommandType::Locate { silence, lang } => {
                 let device = match &mut self.device_traits.locator {
@@ -496,7 +504,7 @@ impl<T: GoogleHomeDevice + Send + Sync + ?Sized + 'static> Device<T> {
                     None => panic!("Unsupported"),
                 };
 
-                device.lock().unwrap().locate(Some(silence), Some(lang))?;
+                device.borrow_mut().locate(Some(silence), Some(lang))?;
             }
             CommandType::LockUnlock { lock, .. } => {
                 let device = match &mut self.device_traits.lock_unlock {
@@ -504,9 +512,9 @@ impl<T: GoogleHomeDevice + Send + Sync + ?Sized + 'static> Device<T> {
                     None => panic!("Unsupported"),
                 };
 
-                device.lock().unwrap().set_locked(lock)?;
+                device.borrow_mut().set_locked(lock)?;
 
-                state.lock = Some(device.lock().unwrap().is_locked()?);
+                state.lock = Some(device.borrow().is_locked()?);
             }
             CommandType::SetModes { update_mode_settings } => {
                 let device = match &mut self.device_traits.modes {
@@ -515,7 +523,7 @@ impl<T: GoogleHomeDevice + Send + Sync + ?Sized + 'static> Device<T> {
                 };
 
                 for (mode_name, setting_name) in update_mode_settings {
-                    device.lock().unwrap().update_mode(mode_name, setting_name)?;
+                    device.borrow_mut().update_mode(mode_name, setting_name)?;
                 }
             }
             CommandType::EnableDisableGuestNetwork { enable } => {
@@ -524,7 +532,7 @@ impl<T: GoogleHomeDevice + Send + Sync + ?Sized + 'static> Device<T> {
                     None => panic!("Unsupported"),
                 };
 
-                device.lock().unwrap().set_guest_network_enabled(enable)?;
+                device.borrow_mut().set_guest_network_enabled(enable)?;
             }
             CommandType::EnableDisableNetworkProfile { enable, profile } => {
                 let device = match &mut self.device_traits.network_control {
@@ -532,7 +540,7 @@ impl<T: GoogleHomeDevice + Send + Sync + ?Sized + 'static> Device<T> {
                     None => panic!("Unsupported"),
                 };
 
-                device.lock().unwrap().set_network_profile_enabled(profile, enable)?;
+                device.borrow_mut().set_network_profile_enabled(profile, enable)?;
             }
             CommandType::GetGuestNetworkPassword => {
                 let device = match &mut self.device_traits.network_control {
@@ -540,7 +548,7 @@ impl<T: GoogleHomeDevice + Send + Sync + ?Sized + 'static> Device<T> {
                     None => panic!("Unsupported"),
                 };
 
-                let password = device.lock().unwrap().get_guest_network_password()?;
+                let password = device.borrow_mut().get_guest_network_password()?;
                 state.guest_network_password = Some(password)
             }
             CommandType::TestNetworkSpeed {
@@ -553,7 +561,7 @@ impl<T: GoogleHomeDevice + Send + Sync + ?Sized + 'static> Device<T> {
                     None => panic!("Unsupported"),
                 };
 
-                device.lock().unwrap().test_network_speed(test_download_speed, test_upload_speed)?;
+                device.borrow_mut().test_network_speed(test_download_speed, test_upload_speed)?;
             }
             CommandType::OnOff { on } => {
                 let device = match &mut self.device_traits.on_off {
@@ -561,7 +569,7 @@ impl<T: GoogleHomeDevice + Send + Sync + ?Sized + 'static> Device<T> {
                     None => panic!("Unsupported"),
                 };
 
-                device.lock().unwrap().set_on(on)?;
+                device.borrow_mut().set_on(on)?;
             }
             _ => {}
         }
@@ -744,40 +752,40 @@ impl<T: GoogleHomeDevice + Send + Sync + ?Sized + 'static> Device<T> {
 #[allow(unused)]
 #[derive(Default)]
 struct DeviceTraits {
-    app_selector: Option<Arc<Mutex<dyn AppSelector>>>,
-    arm_disarm: Option<Arc<Mutex<dyn ArmDisarm>>>,
-    brightness: Option<Arc<Mutex<dyn Brightness + Send + Sync>>>,
-    camera_stream: Option<Arc<Mutex<dyn CameraStream + Send + Sync>>>,
-    channel: Option<Arc<Mutex<dyn Channel + Send + Sync>>>,
-    color_setting: Option<Arc<Mutex<dyn ColorSetting + Send + Sync>>>,
-    cook: Option<Arc<Mutex<dyn Cook + Send + Sync>>>,
-    dispense: Option<Arc<Mutex<dyn Dispense + Send + Sync>>>,
-    dock: Option<Arc<Mutex<dyn Dock + Send + Sync>>>,
-    energy_storage: Option<Arc<Mutex<dyn EnergyStorage + Send + Sync>>>,
-    fan_speed: Option<Arc<Mutex<dyn FanSpeed + Send + Sync>>>,
-    fill: Option<Arc<Mutex<dyn Fill + Send + Sync>>>,
-    humidity_setting: Option<Arc<Mutex<dyn HumiditySetting + Send + Sync>>>,
-    input_selector: Option<Arc<Mutex<dyn InputSelector + Send + Sync>>>,
-    light_effects: Option<Arc<Mutex<dyn LightEffects + Send + Sync>>>,
-    locator: Option<Arc<Mutex<dyn Locator + Send + Sync>>>,
-    lock_unlock: Option<Arc<Mutex<dyn LockUnlock + Send + Sync>>>,
-    media_state: Option<Arc<Mutex<dyn MediaState + Send + Sync>>>,
-    modes: Option<Arc<Mutex<dyn Modes + Send + Sync>>>,
-    network_control: Option<Arc<Mutex<dyn NetworkControl + Send + Sync>>>,
-    object_detection: Option<Arc<Mutex<dyn ObjectDetection + Send + Sync>>>,
-    on_off: Option<Arc<Mutex<dyn OnOff + Send + Sync>>>,
-    open_close: Option<Arc<Mutex<dyn OpenClose + Send + Sync>>>,
-    reboot: Option<Arc<Mutex<dyn Reboot + Send + Sync>>>,
-    rotation: Option<Arc<Mutex<dyn Rotation + Send + Sync>>>,
-    run_cycle: Option<Arc<Mutex<dyn RunCycle + Send + Sync>>>,
-    sensor_state: Option<Arc<Mutex<dyn SensorState + Send + Sync>>>,
-    scene: Option<Arc<Mutex<dyn Scene + Send + Sync>>>,
-    software_update: Option<Arc<Mutex<dyn SoftwareUpdate + Send + Sync>>>,
-    start_stop: Option<Arc<Mutex<dyn StartStop + Send + Sync>>>,
-    status_report: Option<Arc<Mutex<dyn StatusReport + Send + Sync>>>,
-    temperature_control: Option<Arc<Mutex<dyn TemperatureControl + Send + Sync>>>,
-    temperature_setting: Option<Arc<Mutex<dyn TemperatureSetting + Send + Sync>>>,
-    timer: Option<Arc<Mutex<dyn Timer + Send + Sync>>>,
-    transport_control: Option<Arc<Mutex<dyn TransportControl + Send + Sync>>>,
-    volume: Option<Arc<Mutex<dyn Volume + Send + Sync>>>,
+    app_selector: Option<Rc<RefCell<dyn AppSelector>>>,
+    arm_disarm: Option<Rc<RefCell<dyn ArmDisarm>>>,
+    brightness: Option<Rc<RefCell<dyn Brightness + Send + Sync>>>,
+    camera_stream: Option<Rc<RefCell<dyn CameraStream + Send + Sync>>>,
+    channel: Option<Rc<RefCell<dyn Channel + Send + Sync>>>,
+    color_setting: Option<Rc<RefCell<dyn ColorSetting + Send + Sync>>>,
+    cook: Option<Rc<RefCell<dyn Cook + Send + Sync>>>,
+    dispense: Option<Rc<RefCell<dyn Dispense + Send + Sync>>>,
+    dock: Option<Rc<RefCell<dyn Dock + Send + Sync>>>,
+    energy_storage: Option<Rc<RefCell<dyn EnergyStorage + Send + Sync>>>,
+    fan_speed: Option<Rc<RefCell<dyn FanSpeed + Send + Sync>>>,
+    fill: Option<Rc<RefCell<dyn Fill + Send + Sync>>>,
+    humidity_setting: Option<Rc<RefCell<dyn HumiditySetting + Send + Sync>>>,
+    input_selector: Option<Rc<RefCell<dyn InputSelector + Send + Sync>>>,
+    light_effects: Option<Rc<RefCell<dyn LightEffects + Send + Sync>>>,
+    locator: Option<Rc<RefCell<dyn Locator + Send + Sync>>>,
+    lock_unlock: Option<Rc<RefCell<dyn LockUnlock + Send + Sync>>>,
+    media_state: Option<Rc<RefCell<dyn MediaState + Send + Sync>>>,
+    modes: Option<Rc<RefCell<dyn Modes + Send + Sync>>>,
+    network_control: Option<Rc<RefCell<dyn NetworkControl + Send + Sync>>>,
+    object_detection: Option<Rc<RefCell<dyn ObjectDetection + Send + Sync>>>,
+    on_off: Option<Rc<RefCell<dyn OnOff + Send + Sync>>>,
+    open_close: Option<Rc<RefCell<dyn OpenClose + Send + Sync>>>,
+    reboot: Option<Rc<RefCell<dyn Reboot + Send + Sync>>>,
+    rotation: Option<Rc<RefCell<dyn Rotation + Send + Sync>>>,
+    run_cycle: Option<Rc<RefCell<dyn RunCycle + Send + Sync>>>,
+    sensor_state: Option<Rc<RefCell<dyn SensorState + Send + Sync>>>,
+    scene: Option<Rc<RefCell<dyn Scene + Send + Sync>>>,
+    software_update: Option<Rc<RefCell<dyn SoftwareUpdate + Send + Sync>>>,
+    start_stop: Option<Rc<RefCell<dyn StartStop + Send + Sync>>>,
+    status_report: Option<Rc<RefCell<dyn StatusReport + Send + Sync>>>,
+    temperature_control: Option<Rc<RefCell<dyn TemperatureControl + Send + Sync>>>,
+    temperature_setting: Option<Rc<RefCell<dyn TemperatureSetting + Send + Sync>>>,
+    timer: Option<Rc<RefCell<dyn Timer + Send + Sync>>>,
+    transport_control: Option<Rc<RefCell<dyn TransportControl + Send + Sync>>>,
+    volume: Option<Rc<RefCell<dyn Volume + Send + Sync>>>,
 }

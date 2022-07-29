@@ -17,7 +17,7 @@
 //! use homelander::traits::{CombinedDeviceError, DeviceInfo, DeviceName, GoogleHomeDevice};
 //! use homelander::traits::on_off::OnOff;
 //!
-//! #[derive(Clone)]
+//! #[derive(Debug)]
 //! struct MyDevice(bool);
 //!
 //! // Implement the basic GoogleHomeDevice trait,
@@ -75,9 +75,9 @@
 //! ```
 //! # use std::sync::{Arc, Mutex};
 //! # use homelander::{Device, DeviceTraits, DeviceType, Homelander, Request};
-//! use homelander::fulfillment::request::Input;
+//! # use homelander::fulfillment::request::Input;
 //! # use homelander::traits::{CombinedDeviceError, DeviceInfo, DeviceName, GoogleHomeDevice};
-//! use homelander::traits::on_off::OnOff;
+//! # use homelander::traits::on_off::OnOff;
 //! #
 //! # fn get_homelander(_: String) -> Homelander {
 //! #    let mut homelander = Homelander::new("my_user_id".to_string());
@@ -86,7 +86,8 @@
 //! #    homelander.add_device(device);
 //! #    homelander
 //! # }
-//! # #[derive(Clone)]
+//! #
+//! # #[derive(Debug)]
 //! # struct MyDevice(bool);
 //! #
 //! # impl GoogleHomeDevice for MyDevice {
@@ -141,16 +142,22 @@
 //! let mut homelander = get_homelander("my_user_id".to_string());
 //! // Let homelander handle the request and create a response
 //! // The response can then be returned to Google as JSON
-//! let response = homelander.handle_request(get_incoming_request());
+//! let the_request = get_incoming_request(); // Usually you'd get this from your web framework
+//! let response = homelander.handle_request(the_request);
 //! ```
 //!
 
-use std::collections::HashMap;
-use std::error::Error;
 use crate::fulfillment::request::execute::CommandType;
 use crate::traits::arm_disarm::ArmDisarm;
 use crate::traits::brightness::Brightness;
 use crate::traits::color_setting::ColorSetting;
+use std::collections::HashMap;
+use std::error::Error;
+use std::fmt::Debug;
+use tracing::{instrument, trace};
+use crate::fulfillment::request::Input;
+use crate::fulfillment::response::execute::CommandStatus;
+use crate::traits::{CombinedDeviceError, GoogleHomeDevice};
 
 mod device;
 mod device_trait;
@@ -161,15 +168,11 @@ pub mod fulfillment;
 mod serializable_error;
 pub mod traits;
 
-use crate::fulfillment::request::Input;
-use crate::traits::{CombinedDeviceError, GoogleHomeDevice};
-use crate::fulfillment::response::execute::CommandStatus;
-
+pub use device::Device;
+pub use device_type::DeviceType;
 pub use fulfillment::request::Request;
 pub use fulfillment::response::Response;
-pub use device_type::DeviceType;
 pub use serializable_error::*;
-pub use device::Device;
 
 /// The output of an EXECUTE command
 struct CommandOutput {
@@ -180,11 +183,12 @@ struct CommandOutput {
     debug_string: Option<String>,
 }
 
-pub trait DeviceTraits: GoogleHomeDevice + Send + Sync + 'static {}
+pub trait DeviceTraits: GoogleHomeDevice + Send + Sync + Debug + 'static {}
 
-impl<T: GoogleHomeDevice + Send + Sync + 'static> DeviceTraits for T {}
+impl<T: GoogleHomeDevice + Send + Debug + Sync + 'static> DeviceTraits for T {}
 
 /// Keeps track of all devices owned by a specific user.
+#[derive(Debug)]
 pub struct Homelander {
     agent_user_id: String,
     devices: Vec<Device<dyn crate::DeviceTraits>>,
@@ -209,6 +213,7 @@ impl Homelander {
     }
 
     /// Handle an incomming fulfillment request from Google and create a response for it
+    #[instrument]
     pub fn handle_request(&mut self, request: fulfillment::request::Request) -> fulfillment::response::Response {
         let payload = request
             .inputs
@@ -251,7 +256,6 @@ impl Homelander {
                                 states: None,
                                 error_code: output.error,
                                 debug_string: output.debug_string,
-
                             },
                             CommandStatus::Offline | CommandStatus::Pending => fulfillment::response::execute::Command {
                                 ids: vec![output.id],
@@ -266,7 +270,7 @@ impl Homelander {
                     fulfillment::response::ResponsePayload::Execute(fulfillment::response::execute::Payload { commands })
                 }
                 Input::Sync => fulfillment::response::ResponsePayload::Sync(self.sync()),
-                Input::Query(payload) => fulfillment::response::ResponsePayload::Query(self.query(payload))
+                Input::Query(payload) => fulfillment::response::ResponsePayload::Query(self.query(payload)),
             })
             .collect::<Vec<_>>()
             .remove(0);
@@ -278,14 +282,24 @@ impl Homelander {
     }
 
     /// QUERY all devices specified in `payload`
+    #[instrument]
     fn query(&self, payload: fulfillment::request::query::Payload) -> fulfillment::response::query::Payload {
-        let device_states = payload.devices.into_iter()
+        trace!("Running QUERY operation");
+
+        let device_states = payload
+            .devices
+            .into_iter()
             .map(|device| device.id)
-            .map(|device_id| (device_id.clone(), self.devices.iter()
-                .filter(|device| device.id.eq(&device_id))
-                .map(|device| device.query())
-                .collect::<Vec<_>>())
-            )
+            .map(|device_id| {
+                (
+                    device_id.clone(),
+                    self.devices
+                        .iter()
+                        .filter(|device| device.id.eq(&device_id))
+                        .map(|device| device.query())
+                        .collect::<Vec<_>>(),
+                )
+            })
             .filter(|(_, device_states)| !device_states.is_empty())
             .map(|(id, mut device_state)| (id, device_state.remove(0)))
             .collect::<HashMap<_, _>>();
@@ -298,15 +312,15 @@ impl Homelander {
     }
 
     /// SYNC all devices
+    #[instrument]
     fn sync(&self) -> fulfillment::response::sync::Payload {
-        let devices = self.devices.iter()
-            .map(|x| x.sync())
-            .collect::<Result<Vec<_>, Box<dyn Error>>>();
+        trace!("Running SYNC operation");
+        let devices = self.devices.iter().map(|x| x.sync()).collect::<Result<Vec<_>, Box<dyn Error>>>();
 
         struct PayloadContent {
             devices: Vec<fulfillment::response::sync::Device>,
             error_code: Option<String>,
-            debug_string: Option<String,>
+            debug_string: Option<String>,
         }
 
         let content = match devices {
@@ -318,10 +332,10 @@ impl Homelander {
             Err(e) => PayloadContent {
                 devices: Vec::with_capacity(0),
                 error_code: Some("deviceOffline".to_string()),
-                debug_string: Some(e.to_string())
-            }
+                debug_string: Some(e.to_string()),
+            },
         };
-        
+
         fulfillment::response::sync::Payload {
             agent_user_id: self.agent_user_id.clone(),
             devices: content.devices,
@@ -331,7 +345,9 @@ impl Homelander {
     }
 
     /// EXECUTE `command` on `device_id`
+    #[instrument]
     fn execute(&mut self, device_id: &str, command: CommandType) -> Option<CommandOutput> {
+        trace!("Running EXECUTE intent");
         let mut output = self
             .devices
             .iter_mut()
@@ -354,7 +370,7 @@ mod test {
     use crate::traits::{DeviceInfo, DeviceName, GoogleHomeDevice};
     use crate::{ArmDisarm, CommandType, Device, Homelander};
 
-    #[derive(Clone)]
+    #[derive(Clone, Debug)]
     struct Foo;
 
     impl GoogleHomeDevice for Foo {
@@ -429,7 +445,6 @@ mod test {
 
     #[test]
     fn test_dynamic_traits() {
-
         let mut device = Device::new(Foo, DeviceType::AcUnit, String::default());
         device.set_arm_disarm();
         device.execute(CommandType::ArmDisarm {

@@ -295,6 +295,7 @@ pub mod execute {
 
 #[cfg(test)]
 mod test {
+    use crate::CommandType::OnOff;
     use crate::fulfillment::request::{Input, Request};
 
     #[test]
@@ -344,7 +345,11 @@ mod test {
             inputs: vec![Input::Execute(Execute {
                 commands: vec![Command {
                     devices: vec![Device { id: "123".to_string() }, Device { id: "456".to_string() }],
-                    execution: vec![],
+                    execution: vec![
+                        OnOff {
+                            on: true
+                        }
+                    ],
                 }],
             })],
         };

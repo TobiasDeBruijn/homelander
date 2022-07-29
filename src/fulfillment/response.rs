@@ -16,7 +16,6 @@ pub enum ResponsePayload {
 
 pub mod sync {
     use crate::device_trait::Trait;
-    use serde::Serialize;
     use crate::traits::arm_disarm::AvailableArmLevels;
     use crate::traits::color_setting::{ColorModel, ColorTemperatureRange};
     use crate::traits::cook::{CookingMode, FoodPreset};
@@ -28,6 +27,7 @@ pub mod sync {
     use crate::traits::input_selector::AvailableInput;
     use crate::traits::light_effects::LightEffectType;
     use crate::traits::modes::AvailableMode;
+    use serde::Serialize;
 
     #[derive(Debug, Serialize)]
     #[serde(rename_all = "camelCase")]
@@ -122,8 +122,6 @@ pub mod sync {
 }
 
 pub mod query {
-    use std::collections::HashMap;
-    use serde::Serialize;
     use crate::traits::color_setting::Color;
     use crate::traits::cook::CookingMode;
     use crate::traits::dispense::DispenseItemState;
@@ -132,12 +130,14 @@ pub mod query {
     use crate::traits::media_state::{ActivityState, PlaybackState};
     use crate::traits::network_control::{DownloadSpeedTestResult, NetworkProfileState, NetworkSettings, UploadSpeedTestResult};
     use crate::traits::SizeUnit;
+    use serde::Serialize;
+    use std::collections::HashMap;
 
     #[derive(Debug, Serialize)]
     pub struct Payload {
         pub error_code: Option<String>,
         pub debug_string: Option<String>,
-        pub devices: HashMap<String, QueryDeviceState>
+        pub devices: HashMap<String, QueryDeviceState>,
     }
 
     #[derive(Debug, Serialize)]

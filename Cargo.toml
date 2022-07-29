@@ -2,13 +2,19 @@
 name = "homelander"
 version = "0.1.0"
 edition = "2021"
+authors = ["Tobias de Bruijn <t.debruijn@array21.dev"]
+license = "MIT OR Apache-2.0"
+readme = "REAMDE.md"
+repository = "https://github.com/TobiasDeBruijn/homelander"
+documentation = "https://docs.rs/homelander/latest/homelander/"
+keywords = ["google", "home", "assistant", "integration"]
+categories = ["api-bindings"]
 
 [dependencies]
 thiserror = "1.0.31"
 tracing = "0.1.35"
 strum_macros = "0.24.2"
 convert_case = "0.5.0"
-dyn-clone = "1.0.8"
 
 [dependencies.serde]
 version = "1.0"

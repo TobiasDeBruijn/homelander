@@ -1,12 +1,8 @@
-use std::cell::RefCell;
-use std::error::Error;
-use std::rc::Rc;
 use crate::device_trait::Trait;
 use crate::device_type::DeviceType;
 use crate::execute_error::ExecuteError;
 use crate::fulfillment::response::execute::CommandState;
-use crate::{ArmDisarm, Brightness, ColorSetting, CommandOutput, CommandStatus, CommandType, fulfillment, GoogleHomeDevice, SerializableError};
-use crate::traits::{AppSelector, CameraStream, Channel, ObjectDetection, OpenClose, Reboot, Rotation, RunCycle, Scene, SensorState, SoftwareUpdate, StartStop, StatusReport, TemperatureControl, TemperatureSetting, Timer, TransportControl, Volume};
+use crate::traits::arm_disarm::AvailableArmLevels;
 use crate::traits::cook::{Cook, CookingConfig};
 use crate::traits::dispense::Dispense;
 use crate::traits::dock::Dock;
@@ -22,10 +18,21 @@ use crate::traits::media_state::MediaState;
 use crate::traits::modes::Modes;
 use crate::traits::network_control::NetworkControl;
 use crate::traits::on_off::OnOff;
-use crate::traits::arm_disarm::AvailableArmLevels;
+use crate::traits::{
+    AppSelector, CameraStream, Channel, ObjectDetection, OpenClose, Reboot, Rotation, RunCycle, Scene, SensorState, SoftwareUpdate, StartStop, StatusReport,
+    TemperatureControl, TemperatureSetting, Timer, TransportControl, Volume,
+};
+use crate::{fulfillment, ArmDisarm, Brightness, ColorSetting, CommandOutput, CommandStatus, CommandType, GoogleHomeDevice, SerializableError};
+use std::cell::RefCell;
+use std::error::Error;
+use std::fmt;
+use std::fmt::Debug;
+use std::rc::Rc;
+use tracing::{trace, instrument};
 
 /// A Google Home device with its traits
-pub struct Device<T: GoogleHomeDevice + Send + ?Sized + Sync + 'static> {
+#[derive(Debug)]
+pub struct Device<T: GoogleHomeDevice + Debug + Send + ?Sized + Sync + 'static> {
     pub(crate) id: String,
     device_type: DeviceType,
     device_traits: DeviceTraits,
@@ -33,10 +40,22 @@ pub struct Device<T: GoogleHomeDevice + Send + ?Sized + Sync + 'static> {
     inner: Rc<RefCell<T>>,
 }
 
-impl<T: GoogleHomeDevice + Send + Sync + 'static> Device<T> {
+impl<T: GoogleHomeDevice + Send + Debug + Sync + 'static> Device<T> {
     pub(crate) fn unsize(self) -> Device<dyn crate::DeviceTraits> {
-        let Self { id, device_type, device_traits, traits, inner } = self;
-        Device { id, device_type, device_traits, traits, inner }
+        let Self {
+            id,
+            device_type,
+            device_traits,
+            traits,
+            inner,
+        } = self;
+        Device {
+            id,
+            device_type,
+            device_traits,
+            traits,
+            inner,
+        }
     }
 
     /// Create a new ID. Note that the `id` has to be persistent.
@@ -51,21 +70,25 @@ impl<T: GoogleHomeDevice + Send + Sync + 'static> Device<T> {
     }
 }
 
-impl<T: GoogleHomeDevice + Send + Sync + ?Sized + 'static> Device<T> {
-
+impl<T: GoogleHomeDevice + Send + Sync + Debug + ?Sized + 'static> Device<T> {
     /// Execute the QUERY intent
+    #[instrument]
     pub(crate) fn query(&self) -> fulfillment::response::query::QueryDeviceState {
+        trace!("Running QUERY for device {}", self.id);
+
         let states = self.query_get_states();
         let states = match states {
             Ok(s) => s,
-            Err(e) => return fulfillment::response::query::QueryDeviceState {
-                required: fulfillment::response::query::RequiredQueryDeviceState {
-                    status: fulfillment::response::query::QueryStatus::Error,
-                    on: false,
-                    online: self.inner.borrow().is_online(),
-                    error_code: Some(e.to_string()),
-                },
-                traits: None
+            Err(e) => {
+                return fulfillment::response::query::QueryDeviceState {
+                    required: fulfillment::response::query::RequiredQueryDeviceState {
+                        status: fulfillment::response::query::QueryStatus::Error,
+                        on: false,
+                        online: self.inner.borrow().is_online(),
+                        error_code: Some(e.to_string()),
+                    },
+                    traits: None,
+                }
             }
         };
 
@@ -77,8 +100,8 @@ impl<T: GoogleHomeDevice + Send + Sync + ?Sized + 'static> Device<T> {
                     online: false,
                     error_code: None,
                 },
-                traits: None
-            }
+                traits: None,
+            };
         }
 
         fulfillment::response::query::QueryDeviceState {
@@ -93,16 +116,17 @@ impl<T: GoogleHomeDevice + Send + Sync + ?Sized + 'static> Device<T> {
     }
 
     /// Collect the states for all traits supported by the device
+    #[instrument]
     fn query_get_states(&self) -> Result<fulfillment::response::query::TraitsQueryDeviceState, Box<dyn Error>> {
         todo!()
     }
 
     /// Execute the SYNC intent
+    #[instrument]
     pub(crate) fn sync(&self) -> Result<fulfillment::response::sync::Device, Box<dyn Error>> {
+        trace!("Running SYNC for device {}", self.id);
         let name = self.inner.borrow().get_device_name();
         let info = self.inner.borrow().get_device_info();
-
-
 
         Ok(fulfillment::response::sync::Device {
             id: self.id.clone(),
@@ -121,11 +145,12 @@ impl<T: GoogleHomeDevice + Send + Sync + ?Sized + 'static> Device<T> {
                 hw_version: info.hw,
                 sw_version: info.sw,
             },
-            attributes: self.sync_set_attributes()?
+            attributes: self.sync_set_attributes()?,
         })
     }
 
     /// Collect all attributes for all traits supported by the device
+    #[instrument]
     fn sync_set_attributes(&self) -> Result<fulfillment::response::sync::SyncAttributes, Box<dyn Error>> {
         let mut attributes = fulfillment::response::sync::SyncAttributes::default();
 
@@ -134,7 +159,7 @@ impl<T: GoogleHomeDevice + Send + Sync + ?Sized + 'static> Device<T> {
         if let Some(d) = &self.device_traits.arm_disarm {
             attributes.available_arm_levels = Some(AvailableArmLevels {
                 levels: d.borrow().get_available_arm_levels()?,
-                ordered: d.borrow().is_ordered()?
+                ordered: d.borrow().is_ordered()?,
             });
         }
 
@@ -238,7 +263,9 @@ impl<T: GoogleHomeDevice + Send + Sync + ?Sized + 'static> Device<T> {
     }
 
     /// Execute the EXECUTE intent. Handles the error handling, delegates to [Self::execute_inner]
+    #[instrument]
     pub(crate) fn execute(&mut self, command: CommandType) -> CommandOutput {
+        trace!("Running EXECUTE for device {}", self.id);
         match self.execute_inner(command) {
             Ok(state) => CommandOutput {
                 id: self.id.clone(),
@@ -261,13 +288,14 @@ impl<T: GoogleHomeDevice + Send + Sync + ?Sized + 'static> Device<T> {
                     status: CommandStatus::Offline,
                     state: None,
                     error: None,
-                    debug_string: Some(e.to_string())
+                    debug_string: Some(e.to_string()),
                 },
             },
         }
     }
 
     /// Execute the EXECUTE intent
+    #[instrument]
     fn execute_inner(&mut self, command: CommandType) -> Result<CommandState, ExecuteError> {
         let mut state = CommandState::default();
 
@@ -576,6 +604,7 @@ impl<T: GoogleHomeDevice + Send + Sync + ?Sized + 'static> Device<T> {
         Ok(state)
     }
 
+    /*
     /// Register the [AppSelector] trait
     pub fn set_app_selector(&mut self)
     where
@@ -583,6 +612,7 @@ impl<T: GoogleHomeDevice + Send + Sync + ?Sized + 'static> Device<T> {
     {
         todo!()
     }
+     */
 
     /// Register the [ArmDisarm] trait
     pub fn set_arm_disarm(&mut self)
@@ -602,6 +632,7 @@ impl<T: GoogleHomeDevice + Send + Sync + ?Sized + 'static> Device<T> {
         self.traits.push(Trait::Brightness);
     }
 
+    /*
     /// Register the [CameraStream] trait
     pub fn set_camera_stream(&mut self)
     where
@@ -617,6 +648,7 @@ impl<T: GoogleHomeDevice + Send + Sync + ?Sized + 'static> Device<T> {
     {
         todo!();
     }
+     */
 
     /// Register the [ColorSetting] trait
     pub fn set_color_setting(&mut self)
@@ -788,4 +820,10 @@ struct DeviceTraits {
     timer: Option<Rc<RefCell<dyn Timer + Send + Sync>>>,
     transport_control: Option<Rc<RefCell<dyn TransportControl + Send + Sync>>>,
     volume: Option<Rc<RefCell<dyn Volume + Send + Sync>>>,
+}
+
+impl fmt::Debug for DeviceTraits {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "DeviceTraits {{ .. }}")
+    }
 }

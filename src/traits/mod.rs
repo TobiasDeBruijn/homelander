@@ -73,21 +73,37 @@ pub enum CombinedDeviceError {
 
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
 pub enum Language {
+    #[serde(rename = "da")]
     Danish,
+    #[serde(rename = "nl")]
     Dutch,
+    #[serde(rename = "en")]
     English,
+    #[serde(rename = "fr")]
     French,
+    #[serde(rename = "de")]
     German,
+    #[serde(rename = "hi")]
     Hindi,
+    #[serde(rename = "id")]
     Indonesian,
+    #[serde(rename = "it")]
     Italian,
+    #[serde(rename = "ja")]
     Japanese,
+    #[serde(rename = "ko")]
     Korean,
+    #[serde(rename = "no")]
     Norwegian,
+    #[serde(rename = "pt-BR")]
     Portuguese,
+    #[serde(rename = "es")]
     Spanish,
+    #[serde(rename = "sv")]
     Swedish,
+    #[serde(rename = "th")]
     Thai,
+    #[serde(rename = "zh-TW")]
     Chinese,
 }
 

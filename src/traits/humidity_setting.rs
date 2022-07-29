@@ -1,7 +1,7 @@
 use crate::CombinedDeviceError;
 use serde::Serialize;
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct HumiditySetPointRange {
     /// Represents the minimum humdity level as a percentage.

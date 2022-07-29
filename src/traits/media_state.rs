@@ -1,7 +1,7 @@
 use crate::CombinedDeviceError;
 use serde::Serialize;
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, PartialEq, Serialize)]
 #[serde(rename = "SCREAMING_SNAKE_CASE")]
 pub enum ActivityState {
     Inactive,
@@ -9,7 +9,7 @@ pub enum ActivityState {
     Active,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, PartialEq, Serialize)]
 #[serde(rename = "SCREAMING_SNAKE_CASE")]
 pub enum PlaybackState {
     Paused,

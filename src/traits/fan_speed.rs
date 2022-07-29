@@ -3,7 +3,7 @@ use crate::CombinedDeviceError;
 use serde::Serialize;
 use thiserror::Error;
 
-#[derive(Debug, Error, Serialize)]
+#[derive(Debug, Error, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub enum DeviceError {
     /// The device is already set to the maximum speed.
@@ -14,7 +14,7 @@ pub enum DeviceError {
     MinSpeedReached,
 }
 
-#[derive(Debug, Error)]
+#[derive(Debug, PartialEq, Error)]
 pub enum FanSpeedError {
     #[error("{0}")]
     Device(DeviceError),
@@ -23,7 +23,7 @@ pub enum FanSpeedError {
 }
 
 /// Speed settings supported by the device.
-#[derive(Debug, Serialize)]
+#[derive(Debug, PartialEq, Serialize)]
 pub struct AvailableFanSpeeds {
     /// If set to true, additional grammar for increase or decrease logic will apply, in the order (increasing) of the speeds array.
     pub speeds: Vec<FanSpeedItem>,
@@ -32,7 +32,7 @@ pub struct AvailableFanSpeeds {
 }
 
 /// Speed setting.
-#[derive(Debug, Serialize)]
+#[derive(Debug, PartialEq, Serialize)]
 pub struct FanSpeedItem {
     /// Internal name of the speed setting. This can be non-user-friendly, and will be shared across all languages.
     speed_name: String,
@@ -41,7 +41,7 @@ pub struct FanSpeedItem {
 }
 
 /// Synonym for the speed setting in a given language.
-#[derive(Debug, Serialize)]
+#[derive(Debug, PartialEq, Serialize)]
 pub struct FanSpeedValue {
     /// Synonyms for the speed setting, should include both singular and plural forms, if applicable.
     /// The first synonym in the list will be considered the canonical name of the speed setting.

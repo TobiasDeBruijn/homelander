@@ -3,7 +3,7 @@ use crate::CombinedDeviceError;
 use serde::Serialize;
 
 /// Describes different levels of filling the device.
-#[derive(Debug, Serialize)]
+#[derive(Debug, PartialEq, Serialize)]
 pub struct AvailableFillLevels {
     /// List of level names and language-specific synonyms.
     pub levels: Vec<FillLevel>,
@@ -14,7 +14,7 @@ pub struct AvailableFillLevels {
 }
 
 /// Level name and its language-specific synonyms.
-#[derive(Debug, Serialize)]
+#[derive(Debug, PartialEq, Serialize)]
 pub struct FillLevel {
     /// Internal name of the level. This can be non-user-friendly, and will be shared across all languages.
     pub level_name: String,
@@ -23,7 +23,7 @@ pub struct FillLevel {
 }
 
 /// Synonyms of the level in a given language.
-#[derive(Debug, Serialize)]
+#[derive(Debug, PartialEq, Serialize)]
 pub struct LevelValue {
     /// Synonym of the level. The first string in this list is used as the canonical name of the level in that language.
     pub level_synonym: Vec<String>,

@@ -4,7 +4,7 @@ use serde::Serialize;
 use std::collections::HashMap;
 
 /// Available mode.
-#[derive(Debug, Serialize)]
+#[derive(Debug, PartialEq, Serialize)]
 pub struct AvailableMode {
     /// Internal name of the mode, which will be used in commands and states. This can be non-user-friendly, and will be shared across all languages.
     pub name: String,
@@ -18,7 +18,7 @@ pub struct AvailableMode {
 }
 
 /// Supported setting.
-#[derive(Debug, Serialize)]
+#[derive(Debug, PartialEq, Serialize)]
 pub struct Setting {
     /// Internal name of the mode setting, which will be used in commands and states. This can be non-user-friendly, and will be shared across all languages.
     pub setting_name: String,
@@ -27,7 +27,7 @@ pub struct Setting {
 }
 
 /// Synonyms of the setting in a given language.
-#[derive(Debug, Serialize)]
+#[derive(Debug, PartialEq, Serialize)]
 pub struct SettingValue {
     /// Synonyms of the setting. The first string in this list is used as the canonical name of the level in that language.
     pub setting_synonym: Vec<String>,
@@ -36,7 +36,7 @@ pub struct SettingValue {
 }
 
 /// Synonyms of the mode in a given language.
-#[derive(Debug, Serialize)]
+#[derive(Debug, PartialEq, Serialize)]
 pub struct NameValue {
     /// Synonyms of the mode. The first string in this list is used as the canonical name of the level in that language.
     pub name_synonym: Vec<String>,

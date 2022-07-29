@@ -38,7 +38,7 @@ pub enum CookingMode {
 }
 
 /// Food preset.
-#[derive(Debug, Serialize)]
+#[derive(Debug, PartialEq, Serialize)]
 pub struct FoodPreset {
     /// Internal name of the food preset, which will be used in commands and states. This name can be non-user-friendly, and is shared across all languages.
     pub food_preset_name: String,
@@ -48,7 +48,7 @@ pub struct FoodPreset {
     pub food_synonyms: Vec<Synonym>,
 }
 
-#[derive(Debug, Serialize, Error)]
+#[derive(Debug, PartialEq, Serialize, Error)]
 #[serde(rename = "lowerCamelCase")]
 pub enum CookError {
     #[error("DeviceDoorOpen")]

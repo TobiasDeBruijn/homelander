@@ -21,6 +21,7 @@ pub mod modes;
 pub mod network_control;
 pub mod on_off;
 
+#[derive(Debug, PartialEq)]
 pub struct DeviceInfo {
     pub model: String,
     pub manufacturer: String,
@@ -28,6 +29,7 @@ pub struct DeviceInfo {
     pub sw: String,
 }
 
+#[derive(Debug, PartialEq)]
 pub struct DeviceName {
     pub default_names: Vec<String>,
     pub name: String,
@@ -49,19 +51,19 @@ pub trait GoogleHomeDevice {
     fn is_online(&self) -> bool;
 }
 
-#[derive(Debug, Serialize, Error)]
+#[derive(Debug, PartialEq, Serialize, Error)]
 pub enum DeviceError {
     // Todo
     // https://developers.google.com/assistant/smarthome/reference/errors-exceptions#error_list
 }
 
-#[derive(Debug, Serialize, Error)]
+#[derive(Debug, PartialEq, Serialize, Error)]
 pub enum DeviceException {
     // Todo
     // https://developers.google.com/assistant/smarthome/reference/errors-exceptions#exception_list
 }
 
-#[derive(Debug, Serialize, Error)]
+#[derive(Debug, Serialize, PartialEq, Error)]
 pub enum CombinedDeviceError {
     #[error("{0}")]
     DeviceError(DeviceError),
@@ -137,7 +139,7 @@ pub enum SizeUnit {
 }
 
 /// Name synonyms in each supported language.
-#[derive(Debug, Serialize)]
+#[derive(Debug, PartialEq, Serialize)]
 pub struct Synonym {
     /// Synonyms for the preset, should include both singular and plural forms, if applicable.
     pub synonym: Vec<String>,

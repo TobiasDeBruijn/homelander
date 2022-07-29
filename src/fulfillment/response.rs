@@ -1,13 +1,13 @@
 use serde::Serialize;
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Response {
     pub request_id: String,
     pub payload: ResponsePayload,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, PartialEq, Serialize)]
 pub enum ResponsePayload {
     Sync(sync::Payload),
     Query(query::Payload),
@@ -29,7 +29,7 @@ pub mod sync {
     use crate::traits::modes::AvailableMode;
     use serde::Serialize;
 
-    #[derive(Debug, Serialize)]
+    #[derive(Debug, PartialEq, Serialize)]
     #[serde(rename_all = "camelCase")]
     pub struct Payload {
         pub agent_user_id: String,
@@ -38,7 +38,7 @@ pub mod sync {
         pub debug_string: Option<String>,
     }
 
-    #[derive(Debug, Serialize)]
+    #[derive(Debug, PartialEq, Serialize)]
     #[serde(rename_all = "camelCase")]
     pub struct Device {
         pub id: String,
@@ -52,7 +52,7 @@ pub mod sync {
         pub attributes: SyncAttributes,
     }
 
-    #[derive(Debug, Serialize, Default)]
+    #[derive(Debug, PartialEq, Serialize, Default)]
     #[serde(rename_all = "camelCase")]
     pub struct SyncAttributes {
         // TODO appselector
@@ -103,7 +103,7 @@ pub mod sync {
         pub query_only_on_off: Option<bool>,
     }
 
-    #[derive(Debug, Serialize)]
+    #[derive(Debug, PartialEq, Serialize)]
     #[serde(rename_all = "camelCase")]
     pub struct DeviceInfo {
         pub manufacturer: String,
@@ -112,7 +112,7 @@ pub mod sync {
         pub sw_version: String,
     }
 
-    #[derive(Debug, Serialize)]
+    #[derive(Debug, PartialEq, Serialize)]
     #[serde(rename_all = "camelCase")]
     pub struct DeviceName {
         pub default_names: Vec<String>,
@@ -133,14 +133,14 @@ pub mod query {
     use serde::Serialize;
     use std::collections::HashMap;
 
-    #[derive(Debug, Serialize)]
+    #[derive(Debug, PartialEq, Serialize)]
     pub struct Payload {
         pub error_code: Option<String>,
         pub debug_string: Option<String>,
         pub devices: HashMap<String, QueryDeviceState>,
     }
 
-    #[derive(Debug, Serialize)]
+    #[derive(Debug, PartialEq, Serialize)]
     pub struct QueryDeviceState {
         #[serde(flatten)]
         pub required: RequiredQueryDeviceState,
@@ -148,7 +148,7 @@ pub mod query {
         pub traits: Option<TraitsQueryDeviceState>,
     }
 
-    #[derive(Debug, Serialize)]
+    #[derive(Debug, PartialEq, Serialize)]
     #[allow(unused)]
     #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
     pub enum QueryStatus {
@@ -158,7 +158,7 @@ pub mod query {
         Error,
     }
 
-    #[derive(Debug, Serialize)]
+    #[derive(Debug, PartialEq, Serialize)]
     #[serde(rename_all = "camelCase")]
     pub struct RequiredQueryDeviceState {
         pub on: bool,
@@ -167,7 +167,7 @@ pub mod query {
         pub error_code: Option<String>,
     }
 
-    #[derive(Debug, Serialize)]
+    #[derive(Debug, PartialEq, Serialize)]
     #[serde(rename_all = "camelCase")]
     pub struct TraitsQueryDeviceState {
         // TODO appselector
@@ -226,12 +226,12 @@ pub mod execute {
     use crate::serializable_error::SerializableError;
     use serde::Serialize;
 
-    #[derive(Debug, Serialize)]
+    #[derive(Debug, PartialEq, Serialize)]
     pub struct Payload {
         pub commands: Vec<Command>,
     }
 
-    #[derive(Debug, Serialize)]
+    #[derive(Debug, PartialEq, Serialize)]
     #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
     pub enum CommandStatus {
         Success,
@@ -241,7 +241,7 @@ pub mod execute {
         Error,
     }
 
-    #[derive(Debug, Serialize)]
+    #[derive(Debug, PartialEq, Serialize)]
     #[serde(rename_all = "camelCase")]
     pub struct Command {
         pub ids: Vec<String>,
@@ -251,7 +251,7 @@ pub mod execute {
         pub debug_string: Option<String>,
     }
 
-    #[derive(Debug, Default, Serialize)]
+    #[derive(Debug, Default, PartialEq, Serialize)]
     #[serde(rename_all = "camelCase")]
     pub struct CommandState {
         pub lock: Option<bool>,

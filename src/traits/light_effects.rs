@@ -2,7 +2,7 @@ use crate::CombinedDeviceError;
 use serde::Serialize;
 
 /// Supported light effect.
-#[derive(Debug, Serialize)]
+#[derive(Debug, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub enum LightEffectType {
     /// Loops through various colors randomly.

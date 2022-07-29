@@ -2,7 +2,7 @@ use crate::CombinedDeviceError;
 use serde::Serialize;
 use thiserror::Error;
 
-#[derive(Debug, Error, Serialize)]
+#[derive(Debug, PartialEq, Error, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub enum DeviceError {
     /// The user tried to charge a device that is not plugged in.
@@ -10,7 +10,7 @@ pub enum DeviceError {
     DeviceUnplugged,
 }
 
-#[derive(Debug, Error)]
+#[derive(Debug, PartialEq, Error)]
 pub enum EnergyStorageError {
     #[error("{0}")]
     Device(DeviceError),
@@ -18,14 +18,14 @@ pub enum EnergyStorageError {
     Other(CombinedDeviceError),
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, PartialEq, Serialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum UxDistanceUnit {
     Kilometers,
     Miles,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, PartialEq, Serialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum CapacityState {
     CriticallyLow,
@@ -35,7 +35,7 @@ pub enum CapacityState {
     Full,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, PartialEq, Serialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum CapacityUnit {
     Seconds,
@@ -45,7 +45,7 @@ pub enum CapacityUnit {
     KilowattHours,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, PartialEq, Serialize)]
 pub struct CapacityValue {
     /// The capacity value.
     pub raw_value: i32,

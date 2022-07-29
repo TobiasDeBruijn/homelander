@@ -8,6 +8,12 @@ impl<T: Error + ToString + 'static> ToStringError for T {}
 
 pub struct SerializableError(pub(crate) Box<dyn ToStringError>);
 
+impl PartialEq for SerializableError {
+    fn eq(&self, other: &Self) -> bool {
+        self.0.to_string().eq(&other.0.to_string())
+    }
+}
+
 impl Serialize for SerializableError {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where

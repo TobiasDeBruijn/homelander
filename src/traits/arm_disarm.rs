@@ -3,7 +3,7 @@ use crate::CombinedDeviceError;
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, PartialEq, Serialize)]
 pub struct AvailableArmLevels {
     pub levels: Option<Vec<ArmLevel>>,
     pub ordered: bool,
@@ -27,7 +27,7 @@ pub struct LevelValue {
 }
 
 /// An error occurred arming or disarming the device.
-#[derive(Debug, Error)]
+#[derive(Debug, PartialEq, Error)]
 pub enum ArmDisarmError {
     #[error("alreadyInState")]
     AlreadyInState,

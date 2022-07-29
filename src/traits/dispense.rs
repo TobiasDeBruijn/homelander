@@ -3,7 +3,7 @@ use crate::CombinedDeviceError;
 use serde::Serialize;
 use thiserror::Error;
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, PartialEq, Serialize)]
 pub struct DispenseItem {
     /// Internal name for the dispensed item. This can be non-user-friendly, and is shared across all languages.
     item_name: String,
@@ -15,7 +15,7 @@ pub struct DispenseItem {
     default_portion: DispenseAmount,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, PartialEq, Serialize)]
 pub struct DispenseAmount {
     /// Dispensed amount.
     amount: f32,
@@ -24,7 +24,7 @@ pub struct DispenseAmount {
 }
 
 /// Preset.
-#[derive(Debug, Serialize)]
+#[derive(Debug, PartialEq, Serialize)]
 pub struct DispensePreset {
     /// Internal name for the preset. This name can be non-user-friendly, and is shared across all languages.
     preset_name: String,
@@ -32,7 +32,7 @@ pub struct DispensePreset {
     preset_name_synonyms: Vec<Synonym>,
 }
 
-#[derive(Debug, Error, Serialize)]
+#[derive(Debug, Error, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub enum DeviceError {
     /// The user tried to dispense an item or amount from a device that does not have enough amount remaining.
@@ -73,7 +73,7 @@ pub enum DeviceError {
     DeviceBusy,
 }
 
-#[derive(Debug, Error, Serialize)]
+#[derive(Debug, Error, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub enum DeviceException {
     /// The user dispenses an item or amount from the device which brings the
@@ -87,7 +87,7 @@ pub enum DeviceException {
     UserNeedsToWait,
 }
 
-#[derive(Debug, Error)]
+#[derive(Debug, PartialEq, Error)]
 pub enum DispenseError {
     #[error("{0}")]
     Error(DeviceError),
@@ -97,7 +97,7 @@ pub enum DispenseError {
     Other(CombinedDeviceError),
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct DispenseItemState {
     /// Name of the item from the item_name attribute.

@@ -3,7 +3,7 @@ use serde::Serialize;
 use std::collections::HashMap;
 use thiserror::Error;
 
-#[derive(Debug, Error, Serialize)]
+#[derive(Debug, Error, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub enum DeviceError {
     /// An error occurred while attempting to control the given network profile.
@@ -14,7 +14,7 @@ pub enum DeviceError {
     NetworkSpeedTestInProgress,
 }
 
-#[derive(Debug, Error)]
+#[derive(Debug, PartialEq, Error)]
 pub enum NetworkControlError {
     #[error("{0}")]
     Device(#[from] DeviceError),
@@ -22,13 +22,13 @@ pub enum NetworkControlError {
     Other(#[from] CombinedDeviceError),
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, PartialEq, Serialize)]
 pub struct NetworkSettings {
     /// Network SSID.
     pub ssid: String,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, PartialEq, Serialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum SpeedTestStatus {
     Success,
@@ -36,7 +36,7 @@ pub enum SpeedTestStatus {
 }
 
 /// Contains the results of the most recent network download speed test.
-#[derive(Debug, Serialize)]
+#[derive(Debug, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct DownloadSpeedTestResult {
     /// The download speed in Mbps (megabits per second) of the last network speed test.
@@ -48,7 +48,7 @@ pub struct DownloadSpeedTestResult {
 }
 
 /// Contains the results of the most recent network upload speed test.
-#[derive(Debug, Serialize)]
+#[derive(Debug, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct UploadSpeedTestResult {
     /// The upload speed in Mbps (megabits per second) of the last network speed test.
@@ -61,7 +61,7 @@ pub struct UploadSpeedTestResult {
 
 /// An object storing the state of an individual network profile.
 /// The value of the key should be the name of one of the network profiles in the networkProfiles attribute.
-#[derive(Debug, Serialize)]
+#[derive(Debug, PartialEq, Serialize)]
 pub struct NetworkProfileState {
     /// The current enabled/disabled state of the network profile.
     pub enabled: bool,

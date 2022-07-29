@@ -3,7 +3,7 @@ use crate::CombinedDeviceError;
 use serde::Serialize;
 use thiserror::Error;
 
-#[derive(Debug, Error, Serialize)]
+#[derive(Debug, Error, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub enum DeviceError {
     /// The input is not currently supported.
@@ -11,7 +11,7 @@ pub enum DeviceError {
     UnsupportedInput,
 }
 
-#[derive(Debug, Error)]
+#[derive(Debug, PartialEq, Error)]
 pub enum InputSelectorError {
     #[error("{0}")]
     Device(DeviceError),
@@ -20,7 +20,7 @@ pub enum InputSelectorError {
 }
 
 /// Available input.
-#[derive(Debug, Serialize)]
+#[derive(Debug, PartialEq, Serialize)]
 pub struct AvailableInput {
     /// Unique key for the input. The key should not be exposed to users in speech or response.
     pub key: String,
@@ -29,7 +29,7 @@ pub struct AvailableInput {
 }
 
 /// Input for a given available language.
-#[derive(Debug, Serialize)]
+#[derive(Debug, PartialEq, Serialize)]
 pub struct InputName {
     /// Language code.
     pub lang: Language,

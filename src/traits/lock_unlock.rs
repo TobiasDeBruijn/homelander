@@ -2,7 +2,7 @@ use crate::CombinedDeviceError;
 use serde::Serialize;
 use thiserror::Error;
 
-#[derive(Debug, Error, Serialize)]
+#[derive(Debug, Error, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub enum DeviceError {
     #[error("RemoteSetDisabled")]
@@ -17,7 +17,7 @@ pub enum DeviceError {
     AlreadyUnlocked,
 }
 
-#[derive(Debug, Error)]
+#[derive(Debug, PartialEq, Error)]
 pub enum LockUnlockError {
     #[error("{0}")]
     Device(DeviceError),

@@ -20,6 +20,7 @@ pub mod media_state;
 pub mod modes;
 pub mod network_control;
 pub mod on_off;
+pub mod open_close;
 
 #[derive(Debug, PartialEq)]
 pub struct DeviceInfo {
@@ -171,13 +172,6 @@ pub trait Channel {
 pub trait ObjectDetection {
     // TODO
 }
-
-/// This trait belongs to devices that support opening and closing,
-/// and in some cases opening and closing partially or potentially in more
-/// than one direction. For example, some blinds may open either to the left or to the right.
-/// In some cases, opening certain devices may be a security sensitive action which can
-/// require two-factor authentication authentication. See [Two-factor authentication](https://developers.google.com/assistant/smarthome/two-factor-authentication).
-pub trait OpenClose {}
 
 /// This trait belongs to devices that support rebooting, such as routers. The device needs to support rebooting as a single action.
 pub trait Reboot {}

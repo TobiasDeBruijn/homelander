@@ -27,6 +27,7 @@ pub mod sync {
     use crate::traits::input_selector::AvailableInput;
     use crate::traits::light_effects::LightEffectType;
     use crate::traits::modes::AvailableMode;
+    use crate::traits::open_close::OpenDirection;
     use serde::Serialize;
 
     #[derive(Debug, PartialEq, Serialize)]
@@ -101,6 +102,10 @@ pub mod sync {
         pub supports_network_upload_speed_test: Option<bool>,
         pub command_only_on_off: Option<bool>,
         pub query_only_on_off: Option<bool>,
+        pub discrete_only_open_close: Option<bool>,
+        pub open_direction: Option<Vec<OpenDirection>>,
+        pub command_only_open_close: Option<bool>,
+        pub query_only_open_close: Option<bool>,
     }
 
     #[derive(Debug, PartialEq, Serialize)]
@@ -129,6 +134,7 @@ pub mod query {
     use crate::traits::light_effects::LightEffectType;
     use crate::traits::media_state::{ActivityState, PlaybackState};
     use crate::traits::network_control::{DownloadSpeedTestResult, NetworkProfileState, NetworkSettings, UploadSpeedTestResult};
+    use crate::traits::open_close::OpenState;
     use crate::traits::SizeUnit;
     use serde::Serialize;
     use std::collections::HashMap;
@@ -219,6 +225,8 @@ pub mod query {
         network_speed_test_in_progress: Option<bool>,
         network_profiles_state: Option<HashMap<String, NetworkProfileState>>,
         on: Option<bool>,
+        open_percent: Option<bool>,
+        open_state: Option<Vec<OpenState>>,
     }
 }
 

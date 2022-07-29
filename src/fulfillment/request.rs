@@ -35,6 +35,7 @@ pub mod query {
 pub mod execute {
     use crate::traits::color_setting::ColorCommand;
     use crate::traits::cook::CookingMode;
+    use crate::traits::open_close::OpenDirection;
     use crate::traits::{Language, SizeUnit};
     use serde::Deserialize;
     use std::collections::HashMap;
@@ -290,13 +291,33 @@ pub mod execute {
             /// Whether to turn the device on or off.
             on: bool,
         },
+        /// Set the open-close state of the device.
+        #[serde(rename = "action.devices.commands.OpenClose")]
+        OpenClose {
+            /// Indicates the percentage that a device is opened, where 0 is closed and 100 is fully open.
+            #[serde(rename = "openPercent")]
+            open_percent: f32,
+            /// Direction in which to open. Only present if device supports multiple directions, as indicated by the openDirection attribute, and a direction is specified by the user.
+            #[serde(rename = "openDirection")]
+            open_direction: Option<OpenDirection>,
+        },
+        /// Adjust the open-close state of the device relative to the current state.
+        #[serde(rename = "action.devices.commands.OpenCloseRelative")]
+        OpenCloseRelative {
+            /// The exact percentage to change open-close state. Ambigous relative commands will be converted to an exact percentage parameter (for example, "Open the blinds a little more" vs "Open the blinds by 5%").
+            #[serde(rename = "oopenRelativePercent")]
+            open_relative_percent: f32,
+            /// Direction in which to open. Only present if device supports multiple directions, as indicated by the openDirection attribute, and a direction is specified by the user.
+            #[serde(rename = "openDirection")]
+            open_direction: Option<OpenDirection>,
+        },
     }
 }
 
 #[cfg(test)]
 mod test {
-    use crate::CommandType::OnOff;
     use crate::fulfillment::request::{Input, Request};
+    use crate::CommandType::OnOff;
 
     #[test]
     fn test_execute_payload() {
@@ -345,11 +366,7 @@ mod test {
             inputs: vec![Input::Execute(Execute {
                 commands: vec![Command {
                     devices: vec![Device { id: "123".to_string() }, Device { id: "456".to_string() }],
-                    execution: vec![
-                        OnOff {
-                            on: true
-                        }
-                    ],
+                    execution: vec![OnOff { on: true }],
                 }],
             })],
         };

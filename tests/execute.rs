@@ -1,10 +1,10 @@
-use homelander::{Device, DeviceType, Homelander, Request, Response};
 use homelander::fulfillment::request::execute::{Command, CommandType, Execute};
 use homelander::fulfillment::request::Input;
 use homelander::fulfillment::response::execute::CommandStatus;
 use homelander::fulfillment::response::ResponsePayload;
-use homelander::traits::{CombinedDeviceError, DeviceInfo, DeviceName, GoogleHomeDevice};
 use homelander::traits::on_off::OnOff;
+use homelander::traits::{CombinedDeviceError, DeviceInfo, DeviceName, GoogleHomeDevice};
+use homelander::{Device, DeviceType, Homelander, Request, Response};
 
 #[derive(Debug)]
 struct UltimateSwitch {
@@ -29,7 +29,7 @@ impl GoogleHomeDevice for UltimateSwitch {
         DeviceName {
             name: "UltimateSwitch".to_string(),
             nicknames: Vec::new(),
-            default_names: Vec::new()
+            default_names: Vec::new(),
         }
     }
 
@@ -54,7 +54,7 @@ fn setup_homelander() -> Homelander {
     let mut device = Device::new(switch, DeviceType::Switch, "00".to_string());
     device.set_on_off();
 
-    let mut homelander= Homelander::new("01".to_string());
+    let mut homelander = Homelander::new("01".to_string());
     homelander.add_device(device);
 
     homelander
@@ -63,24 +63,12 @@ fn setup_homelander() -> Homelander {
 fn get_request_payload() -> Request {
     Request {
         request_id: "02".to_string(),
-        inputs: vec! [
-            Input::Execute(Execute {
-                commands: vec! [
-                    Command {
-                        devices: vec! [
-                            homelander::fulfillment::request::execute::Device {
-                                id: "00".to_string(),
-                            }
-                        ],
-                        execution: vec! [
-                            CommandType::OnOff {
-                                on: true
-                            }
-                        ]
-                    }
-                ]
-            })
-        ]
+        inputs: vec![Input::Execute(Execute {
+            commands: vec![Command {
+                devices: vec![homelander::fulfillment::request::execute::Device { id: "00".to_string() }],
+                execution: vec![CommandType::OnOff { on: true }],
+            }],
+        })],
     }
 }
 
@@ -88,18 +76,14 @@ fn get_response_payload() -> Response {
     Response {
         request_id: "02".to_string(),
         payload: ResponsePayload::Execute(homelander::fulfillment::response::execute::Payload {
-            commands: vec! [
-                homelander::fulfillment::response::execute::Command {
-                    debug_string: None,
-                    error_code: None,
-                    status: CommandStatus::Success,
-                    ids: vec! [
-                        "00".to_string()
-                    ],
-                    states: None,
-                }
-            ]
-        })
+            commands: vec![homelander::fulfillment::response::execute::Command {
+                debug_string: None,
+                error_code: None,
+                status: CommandStatus::Success,
+                ids: vec!["00".to_string()],
+                states: None,
+            }],
+        }),
     }
 }
 

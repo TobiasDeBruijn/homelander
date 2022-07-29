@@ -27,12 +27,13 @@ The following [Traits](https://developers.google.com/assistant/smarthome/traits)
 - Modes
 - NetworkControl
 - OnOff
+- OpenClose
 
 These traits are not yet implemented:
 - AppSelector
 - CameraStream
+- ObjectDetection
 - Channel
-- OpenClose
 - Reboot
 - Rotation
 - RunCycle
@@ -50,6 +51,12 @@ These traits are not yet implemented:
 
 They are however planned to be implemented, though. You can help by submitting a pull request with the implementation. 
 You will find the traits definition in the `traits` module, they are completely non-functional though.
+
+## Things that need love too
+- Error handling. It's just not pretty at the moment, and is not always up to spec
+- Documentation. Quite often you'll still need to check out Google's docs
+- Sending notifications to Google (for follow-up or ObjectDetection)
+- Requesting a QUERY from Google
 
 # License
 Homelander is dual licensed under the MIT and Apache-2.0 license

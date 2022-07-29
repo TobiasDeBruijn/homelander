@@ -6,6 +6,7 @@ use crate::traits::fan_speed::FanSpeedError;
 use crate::traits::input_selector::InputSelectorError;
 use crate::traits::lock_unlock::LockUnlockError;
 use crate::traits::network_control::NetworkControlError;
+use crate::traits::open_close::OpenCloseError;
 use crate::{CombinedDeviceError, ToStringError};
 use std::error::Error;
 
@@ -43,3 +44,4 @@ impl_execute_error!(FanSpeedError);
 impl_execute_error!(InputSelectorError);
 impl_execute_error!(LockUnlockError);
 impl_execute_error!(NetworkControlError);
+impl_execute_error!(OpenCloseError);

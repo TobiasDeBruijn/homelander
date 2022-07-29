@@ -18,8 +18,9 @@ use crate::traits::media_state::MediaState;
 use crate::traits::modes::Modes;
 use crate::traits::network_control::NetworkControl;
 use crate::traits::on_off::OnOff;
+use crate::traits::open_close::OpenClose;
 use crate::traits::{
-    AppSelector, CameraStream, Channel, ObjectDetection, OpenClose, Reboot, Rotation, RunCycle, Scene, SensorState, SoftwareUpdate, StartStop, StatusReport,
+    AppSelector, CameraStream, Channel, ObjectDetection, Reboot, Rotation, RunCycle, Scene, SensorState, SoftwareUpdate, StartStop, StatusReport,
     TemperatureControl, TemperatureSetting, Timer, TransportControl, Volume,
 };
 use crate::{fulfillment, ArmDisarm, Brightness, ColorSetting, CommandOutput, CommandStatus, CommandType, GoogleHomeDevice, SerializableError};
@@ -28,7 +29,7 @@ use std::error::Error;
 use std::fmt;
 use std::fmt::Debug;
 use std::rc::Rc;
-use tracing::{trace, instrument};
+use tracing::{instrument, trace};
 
 /// A Google Home device with its traits
 #[derive(Debug)]
@@ -255,6 +256,13 @@ impl<T: GoogleHomeDevice + Send + Sync + Debug + ?Sized + 'static> Device<T> {
         if let Some(d) = &self.device_traits.on_off {
             attributes.command_only_on_off = d.borrow().is_command_only()?;
             attributes.query_only_on_off = d.borrow().is_query_only()?;
+        }
+
+        if let Some(d) = &self.device_traits.open_close {
+            attributes.discrete_only_open_close = d.borrow().is_discrete_only_open_close()?;
+            attributes.open_direction = d.borrow().get_supported_opening_directions()?;
+            attributes.command_only_open_close = d.borrow().is_command_only_open_close()?;
+            attributes.query_only_open_close = d.borrow().is_query_only_open_close()?;
         }
 
         // TODO the rest of the traits
@@ -599,6 +607,25 @@ impl<T: GoogleHomeDevice + Send + Sync + Debug + ?Sized + 'static> Device<T> {
 
                 device.borrow_mut().set_on(on)?;
             }
+            CommandType::OpenClose { open_percent, open_direction } => {
+                let device = match &mut self.device_traits.open_close {
+                    Some(x) => x,
+                    None => panic!("Unsupported"),
+                };
+
+                device.borrow_mut().set_open(open_percent, open_direction)?;
+            }
+            CommandType::OpenCloseRelative {
+                open_relative_percent,
+                open_direction,
+            } => {
+                let device = match &mut self.device_traits.open_close {
+                    Some(x) => x,
+                    None => panic!("Unsupported"),
+                };
+
+                device.borrow_mut().set_open_relative(open_relative_percent, open_direction)?;
+            }
             _ => {}
         }
         Ok(state)
@@ -774,6 +801,14 @@ impl<T: GoogleHomeDevice + Send + Sync + Debug + ?Sized + 'static> Device<T> {
     {
         self.device_traits.on_off = Some(self.inner.clone());
         self.traits.push(Trait::OnOff);
+    }
+
+    pub fn set_open_close(&mut self)
+    where
+        T: OpenClose + Sized,
+    {
+        self.device_traits.open_close = Some(self.inner.clone());
+        self.traits.push(Trait::OpenClose);
     }
 
     // TODO rest of the traits

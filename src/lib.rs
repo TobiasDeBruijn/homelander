@@ -148,16 +148,16 @@
 //!
 
 use crate::fulfillment::request::execute::CommandType;
+use crate::fulfillment::request::Input;
+use crate::fulfillment::response::execute::CommandStatus;
 use crate::traits::arm_disarm::ArmDisarm;
 use crate::traits::brightness::Brightness;
 use crate::traits::color_setting::ColorSetting;
+use crate::traits::{CombinedDeviceError, GoogleHomeDevice};
 use std::collections::HashMap;
 use std::error::Error;
 use std::fmt::Debug;
 use tracing::{instrument, trace};
-use crate::fulfillment::request::Input;
-use crate::fulfillment::response::execute::CommandStatus;
-use crate::traits::{CombinedDeviceError, GoogleHomeDevice};
 
 mod device;
 mod device_trait;

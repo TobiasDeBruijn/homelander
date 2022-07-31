@@ -311,6 +311,19 @@ pub mod execute {
             #[serde(rename = "openDirection")]
             open_direction: Option<OpenDirection>,
         },
+        /// Reboots the device.
+        #[serde(rename = "action.devices.commands.Reboot")]
+        Reboot,
+        /// Set the absolute rotation of the device.
+        #[serde(rename = "action.devices.commands.RotationAbsolute")]
+        RotationAbsolute {
+            /// An absolute value, in degrees, that specifies the final clockwise rotation of the device. Value must fall within rotationDegreesRange attribute.
+            #[serde(rename = "rotationDegrees")]
+            rotation_degrees: Option<f32>,
+            /// An absolute value, in percentage, that specifies the final rotation of the device.
+            #[serde(rename = "rotationPercent")]
+            rotation_percent: Option<f32>
+        }
     }
 }
 

@@ -20,7 +20,7 @@ use crate::traits::network_control::NetworkControl;
 use crate::traits::on_off::OnOff;
 use crate::traits::open_close::OpenClose;
 use crate::traits::{
-    AppSelector, CameraStream, Channel, ObjectDetection, Reboot, Rotation, RunCycle, Scene, SensorState, SoftwareUpdate, StartStop, StatusReport,
+    AppSelector, CameraStream, Channel, ObjectDetection, RunCycle, Scene, SensorState, SoftwareUpdate, StartStop, StatusReport,
     TemperatureControl, TemperatureSetting, Timer, TransportControl, Volume,
 };
 use crate::{fulfillment, ArmDisarm, Brightness, ColorSetting, CommandOutput, CommandStatus, CommandType, GoogleHomeDevice, SerializableError};
@@ -30,6 +30,9 @@ use std::fmt;
 use std::fmt::Debug;
 use std::rc::Rc;
 use tracing::{instrument, trace};
+use crate::traits::reboot::Reboot;
+use crate::traits::rotation::Rotation;
+use crate::traits::run_cycle::RunCycle;
 
 /// A Google Home device with its traits
 #[derive(Debug)]
@@ -263,6 +266,14 @@ impl<T: GoogleHomeDevice + Send + Sync + Debug + ?Sized + 'static> Device<T> {
             attributes.open_direction = d.borrow().get_supported_opening_directions()?;
             attributes.command_only_open_close = d.borrow().is_command_only_open_close()?;
             attributes.query_only_open_close = d.borrow().is_query_only_open_close()?;
+        }
+
+        if let Some(d) = &self.device_traits.rotation {
+            attributes.supports_degrees = Some(d.borrow().supports_degrees()?);
+            attributes.supports_percent = Some(d.borrow().supports_percent()?);
+            attributes.rotation_degrees_range = Some(d.borrow().get_rotation_degree_range()?);
+            attributes.supports_continuous_rotation = d.borrow().supports_continuous_rotation()?;
+            attributes.command_only_rotation = d.borrow().is_command_only_rotation()?;
         }
 
         // TODO the rest of the traits
@@ -625,6 +636,26 @@ impl<T: GoogleHomeDevice + Send + Sync + Debug + ?Sized + 'static> Device<T> {
                 };
 
                 device.borrow_mut().set_open_relative(open_relative_percent, open_direction)?;
+            },
+            CommandType::Reboot => {
+                let device = match &mut self.device_traits.reboot {
+                    Some(x) => x,
+                    None => panic!("Unsupported"),
+                };
+
+                device.borrow_mut().reboot()?;
+            },
+            CommandType::RotationAbsolute { rotation_degrees, rotation_percent } => {
+                let device = match &mut self.device_traits.rotation {
+                    Some(x) => x,
+                    None => panic!("Unsupported"),
+                };
+
+                if let Some(deg) = rotation_degrees {
+                    device.borrow_mut().set_rotation_degrees(deg)?;
+                } else if let Some(per) = rotation_percent {
+                    device.borrow_mut().set_rotation_percent(per)?;
+                }
             }
             _ => {}
         }
@@ -803,12 +834,40 @@ impl<T: GoogleHomeDevice + Send + Sync + Debug + ?Sized + 'static> Device<T> {
         self.traits.push(Trait::OnOff);
     }
 
+    /// Register the [OpenClose] trait
     pub fn set_open_close(&mut self)
     where
         T: OpenClose + Sized,
     {
         self.device_traits.open_close = Some(self.inner.clone());
         self.traits.push(Trait::OpenClose);
+    }
+
+    /// Register the [Reboot] trait
+    pub fn set_reboot(&mut self)
+    where
+        T: Reboot + Sized
+    {
+        self.device_traits.reboot = Some(self.inner.clone());
+        self.traits.push(Trait::Reboot);
+    }
+
+    /// Register the [Rotation] trait
+    pub fn set_rotation(&mut self)
+    where
+        T: Rotation + Sized
+    {
+        self.device_traits.rotation = Some(self.inner.clone());
+        self.traits.push(Trait::Rotation);
+    }
+
+    /// Register the [RunCycle] trait
+    pub fn set_run_cycle(&mut self)
+    where
+        T: RunCycle + Sized
+    {
+        self.device_traits.run_cycle = Some(self.inner.clone());
+        self.traits.push(Trait::RunCycle);
     }
 
     // TODO rest of the traits

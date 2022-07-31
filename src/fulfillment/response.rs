@@ -29,6 +29,7 @@ pub mod sync {
     use crate::traits::modes::AvailableMode;
     use crate::traits::open_close::OpenDirection;
     use serde::Serialize;
+    use crate::traits::rotation::RotationDegreeRange;
 
     #[derive(Debug, PartialEq, Serialize)]
     #[serde(rename_all = "camelCase")]
@@ -106,6 +107,11 @@ pub mod sync {
         pub open_direction: Option<Vec<OpenDirection>>,
         pub command_only_open_close: Option<bool>,
         pub query_only_open_close: Option<bool>,
+        pub supports_degrees: Option<bool>,
+        pub supports_percent: Option<bool>,
+        pub rotation_degrees_range: Option<RotationDegreeRange>,
+        pub supports_continuous_rotation: Option<bool>,
+        pub command_only_rotation: Option<bool>,
     }
 
     #[derive(Debug, PartialEq, Serialize)]
@@ -138,6 +144,7 @@ pub mod query {
     use crate::traits::SizeUnit;
     use serde::Serialize;
     use std::collections::HashMap;
+    use crate::traits::run_cycle::{CurrentRunCycle, RunCycle};
 
     #[derive(Debug, PartialEq, Serialize)]
     pub struct Payload {
@@ -227,6 +234,11 @@ pub mod query {
         on: Option<bool>,
         open_percent: Option<bool>,
         open_state: Option<Vec<OpenState>>,
+        rotation_degrees: Option<f32>,
+        rotation_percent: Option<f32>,
+        pub current_run_cycle: Option<Vec<CurrentRunCycle>>,
+        pub current_total_remaining_time: Option<i32>,
+        pub current_cycle_remaining_time: Option<i32>,
     }
 }
 

@@ -21,6 +21,9 @@ pub mod modes;
 pub mod network_control;
 pub mod on_off;
 pub mod open_close;
+pub mod reboot;
+pub mod rotation;
+pub mod run_cycle;
 
 #[derive(Debug, PartialEq)]
 pub struct DeviceInfo {
@@ -172,16 +175,6 @@ pub trait Channel {
 pub trait ObjectDetection {
     // TODO
 }
-
-/// This trait belongs to devices that support rebooting, such as routers. The device needs to support rebooting as a single action.
-pub trait Reboot {}
-
-/// This trait belongs to devices that support rotation, such as blinds with rotatable slats.
-pub trait Rotation {}
-
-/// This trait represents any device that has an ongoing duration for its operation which can be queried.
-/// This includes, but is not limited to, devices that operate cyclically, such as washing machines, dryers, and dishwashers.
-pub trait RunCycle {}
 
 /// This trait covers both quantitative measurement (for example,
 /// air quality index or smoke level) and qualitative state (for example, whether the air quality is healthy

@@ -1,6 +1,6 @@
-use serde::Serialize;
-use crate::CombinedDeviceError;
 use crate::traits::Language;
+use crate::CombinedDeviceError;
+use serde::Serialize;
 
 /// Contains the synonyms for the current cycle in each supported language.
 #[derive(Debug, PartialEq, Serialize)]
@@ -25,5 +25,4 @@ pub trait RunCycle {
 
     /// Time remaining on current cycle, in seconds.
     fn get_current_cycle_remaining_time(&self) -> Result<i32, CombinedDeviceError>;
-
 }

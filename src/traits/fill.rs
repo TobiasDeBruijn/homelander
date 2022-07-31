@@ -43,7 +43,7 @@ pub trait Fill {
     fn get_current_fill_level(&self) -> Result<Option<String>, CombinedDeviceError>;
 
     /// Required if supportsFillPercent attribute is set. Indicates the current fill level percentage.
-    fn get_current_fill_percent(&self) -> Result<Option<bool>, CombinedDeviceError>;
+    fn get_current_fill_percent(&self) -> Result<Option<f32>, CombinedDeviceError>;
 
     /// True to fill, false to drain.
     fn fill(&mut self, fill: bool) -> Result<(), CombinedDeviceError>;

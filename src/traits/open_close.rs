@@ -76,7 +76,7 @@ pub trait OpenClose {
 
     /// List of states for each supported open direction.
     /// You should return [Some] only if [Self::get_supported_opening_directions] returns [Some] with a [Vec] which is not empty
-    fn get_open_state(&self) -> Result<Option<OpenState>, OpenCloseError>;
+    fn get_open_state(&self) -> Result<Option<Vec<OpenState>>, OpenCloseError>;
 
     /// Set the open-close state of the device.
     /// - `percent` Indicates the percentage that a device is opened, where 0 is closed and 100 is fully open.

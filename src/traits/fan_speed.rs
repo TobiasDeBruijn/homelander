@@ -84,7 +84,7 @@ pub trait FanSpeed {
     /// Indicates the current fan speed by percentage. Required if supportsFanSpeedPercent attribute is set to true
     ///
     /// If [Self::is_support_fan_speed_percent] returns [Some], so must this function
-    fn get_current_fan_speed_percent(&self) -> Result<Option<i32>, FanSpeedError>;
+    fn get_current_fan_speed_percent(&self) -> Result<Option<f32>, FanSpeedError>;
 
     /// Set speed.
     ///

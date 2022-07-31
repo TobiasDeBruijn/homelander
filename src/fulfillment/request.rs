@@ -322,8 +322,8 @@ pub mod execute {
             rotation_degrees: Option<f32>,
             /// An absolute value, in percentage, that specifies the final rotation of the device.
             #[serde(rename = "rotationPercent")]
-            rotation_percent: Option<f32>
-        }
+            rotation_percent: Option<f32>,
+        },
     }
 }
 

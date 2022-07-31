@@ -1,5 +1,5 @@
-use serde::Serialize;
 use crate::CombinedDeviceError;
+use serde::Serialize;
 
 /// Represent the range in degrees that a device can rotate.
 #[derive(Debug, PartialEq, Serialize)]

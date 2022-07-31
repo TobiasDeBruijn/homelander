@@ -19,9 +19,12 @@ use crate::traits::modes::Modes;
 use crate::traits::network_control::NetworkControl;
 use crate::traits::on_off::OnOff;
 use crate::traits::open_close::OpenClose;
+use crate::traits::reboot::Reboot;
+use crate::traits::rotation::Rotation;
+use crate::traits::run_cycle::RunCycle;
 use crate::traits::{
-    AppSelector, CameraStream, Channel, ObjectDetection, RunCycle, Scene, SensorState, SoftwareUpdate, StartStop, StatusReport,
-    TemperatureControl, TemperatureSetting, Timer, TransportControl, Volume,
+    AppSelector, CameraStream, Channel, ObjectDetection, Scene, SensorState, SoftwareUpdate, StartStop, StatusReport, TemperatureControl, TemperatureSetting,
+    Timer, TransportControl, Volume,
 };
 use crate::{fulfillment, ArmDisarm, Brightness, ColorSetting, CommandOutput, CommandStatus, CommandType, GoogleHomeDevice, SerializableError};
 use std::cell::RefCell;
@@ -30,9 +33,6 @@ use std::fmt;
 use std::fmt::Debug;
 use std::rc::Rc;
 use tracing::{instrument, trace};
-use crate::traits::reboot::Reboot;
-use crate::traits::rotation::Rotation;
-use crate::traits::run_cycle::RunCycle;
 
 /// A Google Home device with its traits
 #[derive(Debug)]
@@ -122,7 +122,123 @@ impl<T: GoogleHomeDevice + Send + Sync + Debug + ?Sized + 'static> Device<T> {
     /// Collect the states for all traits supported by the device
     #[instrument]
     fn query_get_states(&self) -> Result<fulfillment::response::query::TraitsQueryDeviceState, Box<dyn Error>> {
-        todo!()
+        let mut states = fulfillment::response::query::TraitsQueryDeviceState::default();
+
+        // TODO AppSelector
+
+        if let Some(d) = &self.device_traits.arm_disarm {
+            states.is_armed = Some(d.borrow().is_armed()?);
+            states.current_arm_level = Some(d.borrow().current_arm_level()?);
+            states.exit_allowance = Some(d.borrow().exit_allowance()?);
+        }
+
+        if let Some(d) = &self.device_traits.brightness {
+            states.brightness = Some(d.borrow().get_brightness()?);
+        }
+
+        // TODO CameraStream
+        // TODO Channel
+
+        if let Some(d) = &self.device_traits.color_setting {
+            states.color = Some(d.borrow().get_color()?);
+        }
+
+        if let Some(d) = &self.device_traits.cook {
+            states.current_cooking_mode = Some(d.borrow().get_current_cooking_mode()?);
+            states.current_food_preset = d.borrow().get_current_food_preset()?;
+            states.current_food_unit = d.borrow().get_current_food_unit()?;
+        }
+
+        if let Some(d) = &self.device_traits.dispense {
+            states.dispense_items = Some(d.borrow().get_dispense_items_state()?);
+        }
+
+        if let Some(d) = &self.device_traits.dock {
+            states.is_docked = Some(d.borrow().is_docked()?);
+        }
+
+        if let Some(d) = &self.device_traits.energy_storage {
+            states.descriptive_capacity_remaining = Some(d.borrow().get_descriptive_capacity_remaining()?);
+            states.capacity_remaining = d.borrow().get_capacity_remaining()?;
+            states.capacity_until_full = d.borrow().get_capacity_until_full()?;
+            states.is_charging = d.borrow().is_charging()?;
+            states.is_plugged_in = d.borrow().is_plugged_in()?;
+        }
+
+        if let Some(d) = &self.device_traits.fan_speed {
+            states.current_fan_speed_setting = d.borrow().get_current_fan_speed_setting()?;
+            states.current_fan_speed_percent = d.borrow().get_current_fan_speed_percent()?;
+        }
+
+        if let Some(d) = &self.device_traits.fill {
+            states.is_filled = Some(d.borrow().is_filled()?);
+            states.current_fill_level = d.borrow().get_current_fill_level()?;
+            states.current_fill_percent = d.borrow().get_current_fill_percent()?;
+        }
+
+        if let Some(d) = &self.device_traits.humidity_setting {
+            states.humidity_setpoint_percent = Some(d.borrow().get_current_humidity_set_point_range()?);
+            states.humidity_ambient_percent = Some(d.borrow().get_current_humidity_ambient_percent()?);
+        }
+
+        if let Some(d) = &self.device_traits.input_selector {
+            states.current_input = Some(d.borrow().get_current_input()?);
+        }
+
+        if let Some(d) = &self.device_traits.light_effects {
+            states.active_light_effect = d.borrow().get_active_light_effect()?;
+            states.light_effect_end_unix_timestamp_sec = d.borrow().get_light_efccect_end_unix_timestamp_sec()?;
+        }
+
+        if let Some(d) = &self.device_traits.lock_unlock {
+            states.is_locked = Some(d.borrow().is_locked()?);
+            states.is_jammed = Some(d.borrow().is_jammed()?);
+        }
+
+        if let Some(d) = &self.device_traits.media_state {
+            states.activity_state = d.borrow().get_activity_state()?;
+            states.playback_state = d.borrow().get_playback_state()?;
+        }
+
+        if let Some(d) = &self.device_traits.modes {
+            states.current_mode_setting = Some(d.borrow().get_current_mode_settings()?);
+        }
+
+        if let Some(d) = &self.device_traits.network_control {
+            states.network_enabled = Some(d.borrow().is_network_enabled()?);
+            states.network_settings = Some(d.borrow().get_network_settings()?);
+            states.guest_network_enabled = Some(d.borrow().is_guest_network_enabled()?);
+            states.guest_network_settings = Some(d.borrow().get_guest_network_settings()?);
+            states.num_connected_devices = Some(d.borrow().get_num_connected_devices()?);
+            states.network_usage_mb = Some(d.borrow().get_network_usage_mb()?);
+            states.network_usage_unlimited = Some(d.borrow().is_network_usage_unlimited()?);
+            states.last_network_download_speed_test = Some(d.borrow().get_last_network_download_speed_test()?);
+            states.last_network_upload_speed_test = Some(d.borrow().get_last_network_upload_speed_test()?);
+            states.network_speed_test_in_progress = d.borrow().is_network_speed_test_in_progress()?;
+            states.network_profiles_state = Some(d.borrow().get_network_profiles_state()?);
+        }
+
+        if let Some(d) = &self.device_traits.on_off {
+            states.on = Some(d.borrow().is_on()?);
+        }
+
+        if let Some(d) = &self.device_traits.open_close {
+            states.open_percent = d.borrow().get_open_percent()?;
+            states.open_state = d.borrow().get_open_state()?;
+        }
+
+        if let Some(d) = &self.device_traits.rotation {
+            states.rotation_degrees = Some(d.borrow().get_rotation_degrees()?);
+            states.rotation_percent = Some(d.borrow().get_rotation_percent()?);
+        }
+
+        if let Some(d) = &self.device_traits.run_cycle {
+            states.current_run_cycle = Some(d.borrow().get_current_run_cycle()?);
+            states.current_total_remaining_time = Some(d.borrow().get_current_total_remaining_time()?);
+            states.current_cycle_remaining_time = Some(d.borrow().get_current_cycle_remaining_time()?);
+        }
+
+        Ok(states)
     }
 
     /// Execute the SYNC intent
@@ -636,7 +752,7 @@ impl<T: GoogleHomeDevice + Send + Sync + Debug + ?Sized + 'static> Device<T> {
                 };
 
                 device.borrow_mut().set_open_relative(open_relative_percent, open_direction)?;
-            },
+            }
             CommandType::Reboot => {
                 let device = match &mut self.device_traits.reboot {
                     Some(x) => x,
@@ -644,8 +760,11 @@ impl<T: GoogleHomeDevice + Send + Sync + Debug + ?Sized + 'static> Device<T> {
                 };
 
                 device.borrow_mut().reboot()?;
-            },
-            CommandType::RotationAbsolute { rotation_degrees, rotation_percent } => {
+            }
+            CommandType::RotationAbsolute {
+                rotation_degrees,
+                rotation_percent,
+            } => {
                 let device = match &mut self.device_traits.rotation {
                     Some(x) => x,
                     None => panic!("Unsupported"),
@@ -846,7 +965,7 @@ impl<T: GoogleHomeDevice + Send + Sync + Debug + ?Sized + 'static> Device<T> {
     /// Register the [Reboot] trait
     pub fn set_reboot(&mut self)
     where
-        T: Reboot + Sized
+        T: Reboot + Sized,
     {
         self.device_traits.reboot = Some(self.inner.clone());
         self.traits.push(Trait::Reboot);
@@ -855,7 +974,7 @@ impl<T: GoogleHomeDevice + Send + Sync + Debug + ?Sized + 'static> Device<T> {
     /// Register the [Rotation] trait
     pub fn set_rotation(&mut self)
     where
-        T: Rotation + Sized
+        T: Rotation + Sized,
     {
         self.device_traits.rotation = Some(self.inner.clone());
         self.traits.push(Trait::Rotation);
@@ -864,7 +983,7 @@ impl<T: GoogleHomeDevice + Send + Sync + Debug + ?Sized + 'static> Device<T> {
     /// Register the [RunCycle] trait
     pub fn set_run_cycle(&mut self)
     where
-        T: RunCycle + Sized
+        T: RunCycle + Sized,
     {
         self.device_traits.run_cycle = Some(self.inner.clone());
         self.traits.push(Trait::RunCycle);

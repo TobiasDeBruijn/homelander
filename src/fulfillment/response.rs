@@ -28,8 +28,8 @@ pub mod sync {
     use crate::traits::light_effects::LightEffectType;
     use crate::traits::modes::AvailableMode;
     use crate::traits::open_close::OpenDirection;
-    use serde::Serialize;
     use crate::traits::rotation::RotationDegreeRange;
+    use serde::Serialize;
 
     #[derive(Debug, PartialEq, Serialize)]
     #[serde(rename_all = "camelCase")]
@@ -141,10 +141,10 @@ pub mod query {
     use crate::traits::media_state::{ActivityState, PlaybackState};
     use crate::traits::network_control::{DownloadSpeedTestResult, NetworkProfileState, NetworkSettings, UploadSpeedTestResult};
     use crate::traits::open_close::OpenState;
+    use crate::traits::run_cycle::CurrentRunCycle;
     use crate::traits::SizeUnit;
     use serde::Serialize;
     use std::collections::HashMap;
-    use crate::traits::run_cycle::{CurrentRunCycle, RunCycle};
 
     #[derive(Debug, PartialEq, Serialize)]
     pub struct Payload {
@@ -180,62 +180,62 @@ pub mod query {
         pub error_code: Option<String>,
     }
 
-    #[derive(Debug, PartialEq, Serialize)]
+    #[derive(Debug, Default, PartialEq, Serialize)]
     #[serde(rename_all = "camelCase")]
     pub struct TraitsQueryDeviceState {
         // TODO appselector
-        is_armed: Option<bool>,
-        current_arm_level: Option<String>,
-        exit_allowance: Option<i32>,
-        brightness: Option<i32>,
+        pub is_armed: Option<bool>,
+        pub current_arm_level: Option<String>,
+        pub exit_allowance: Option<i32>,
+        pub brightness: Option<i32>,
         // TODO camerastream
         // TODO channel
-        color: Option<Color>,
-        current_cooking_mode: Option<CookingMode>,
-        current_food_preset: Option<String>,
-        current_food_quantity: Option<f32>,
-        current_food_unit: Option<SizeUnit>,
-        dispense_items: Option<Vec<DispenseItemState>>,
-        is_docked: Option<bool>,
-        descriptive_capacity_remaining: Option<CapacityState>,
-        capacity_remaining: Option<CapacityValue>,
-        capacity_until_full: Option<CapacityValue>,
-        is_charging: Option<bool>,
-        is_plugged_in: Option<bool>,
-        current_fan_speed_setting: Option<Vec<String>>,
-        current_fan_speed_percent: Option<f32>,
-        is_filled: Option<bool>,
-        current_fill_level: Option<String>,
-        current_fill_percent: Option<f32>,
-        humidity_setpoint_percent: Option<i32>,
-        humidity_ambient_percent: Option<i32>,
-        current_input: Option<String>,
-        active_light_effect: Option<LightEffectType>,
-        light_effect_end_unix_timestamp_sec: Option<i64>,
-        is_locked: Option<bool>,
-        is_jammed: Option<bool>,
-        activity_state: Option<ActivityState>,
-        playback_state: Option<PlaybackState>,
-        current_mode_setting: Option<HashMap<String, String>>,
-        network_enabled: Option<bool>,
-        network_settings: Option<NetworkSettings>,
-        guest_network_enabled: Option<bool>,
-        guest_network_settings: Option<NetworkSettings>,
-        num_connected_devices: Option<i32>,
+        pub color: Option<Color>,
+        pub current_cooking_mode: Option<CookingMode>,
+        pub current_food_preset: Option<String>,
+        pub current_food_quantity: Option<f32>,
+        pub current_food_unit: Option<SizeUnit>,
+        pub dispense_items: Option<Vec<DispenseItemState>>,
+        pub is_docked: Option<bool>,
+        pub descriptive_capacity_remaining: Option<CapacityState>,
+        pub capacity_remaining: Option<Vec<CapacityValue>>,
+        pub capacity_until_full: Option<Vec<CapacityValue>>,
+        pub is_charging: Option<bool>,
+        pub is_plugged_in: Option<bool>,
+        pub current_fan_speed_setting: Option<String>,
+        pub current_fan_speed_percent: Option<f32>,
+        pub is_filled: Option<bool>,
+        pub current_fill_level: Option<String>,
+        pub current_fill_percent: Option<f32>,
+        pub humidity_setpoint_percent: Option<i32>,
+        pub humidity_ambient_percent: Option<i32>,
+        pub current_input: Option<String>,
+        pub active_light_effect: Option<LightEffectType>,
+        pub light_effect_end_unix_timestamp_sec: Option<i64>,
+        pub is_locked: Option<bool>,
+        pub is_jammed: Option<bool>,
+        pub activity_state: Option<ActivityState>,
+        pub playback_state: Option<PlaybackState>,
+        pub current_mode_setting: Option<HashMap<String, String>>,
+        pub network_enabled: Option<bool>,
+        pub network_settings: Option<NetworkSettings>,
+        pub guest_network_enabled: Option<bool>,
+        pub guest_network_settings: Option<NetworkSettings>,
+        pub num_connected_devices: Option<i32>,
         #[serde(rename = "networkUsageMB")]
-        network_usage_mb: Option<f32>,
+        pub network_usage_mb: Option<f32>,
         #[serde(rename = "networkUsageLimitMB")]
-        network_usage_limit_mb: Option<f32>,
-        network_usage_unlimited: Option<bool>,
-        last_network_download_speed_test: Option<DownloadSpeedTestResult>,
-        last_network_upload_speed_test: Option<UploadSpeedTestResult>,
-        network_speed_test_in_progress: Option<bool>,
-        network_profiles_state: Option<HashMap<String, NetworkProfileState>>,
-        on: Option<bool>,
-        open_percent: Option<bool>,
-        open_state: Option<Vec<OpenState>>,
-        rotation_degrees: Option<f32>,
-        rotation_percent: Option<f32>,
+        pub network_usage_limit_mb: Option<f32>,
+        pub network_usage_unlimited: Option<bool>,
+        pub last_network_download_speed_test: Option<DownloadSpeedTestResult>,
+        pub last_network_upload_speed_test: Option<UploadSpeedTestResult>,
+        pub network_speed_test_in_progress: Option<bool>,
+        pub network_profiles_state: Option<HashMap<String, NetworkProfileState>>,
+        pub on: Option<bool>,
+        pub open_percent: Option<f32>,
+        pub open_state: Option<Vec<OpenState>>,
+        pub rotation_degrees: Option<f32>,
+        pub rotation_percent: Option<f32>,
         pub current_run_cycle: Option<Vec<CurrentRunCycle>>,
         pub current_total_remaining_time: Option<i32>,
         pub current_cycle_remaining_time: Option<i32>,

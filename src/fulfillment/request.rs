@@ -391,6 +391,36 @@ pub mod execute {
             #[serde(rename = "thermostatTemperatureRelativeWeight")]
             thermostat_temperature_relative_weight: Option<f32>,
         },
+        /// Start a new timer.
+        #[serde(rename = "action.devices.commands.TimerStart")]
+        TimerStart {
+            /// Duration of the timer in seconds; must be within `[1, maxTimerLimitSec]`.
+            #[serde(rename = "timerTimeSec")]
+            timer_time_sec: i32,
+        },
+        /// Adjust the timer duration.
+        #[serde(rename = "action.devices.commands.TimerAdjust")]
+        TimerAdjust {
+            /// Positive or negative adjustment of the timer in seconds; must be within `[-maxTimerLimitSec, maxTimerLimitSec]`.
+            #[serde(rename = "timerTimeSec")]
+            timer_time_sec: i32,
+        },
+        /// Pause timer.
+        #[serde(rename = "action.devices.commands.TimerPause")]
+        TimerPause,
+        /// Resume timer.
+        #[serde(rename = "action.devices.commands.TimerResume")]
+        TimerResume,
+        /// Cancel the timer.
+        #[serde(rename = "action.devices.commands.TimerCancel")]
+        TimerCancel,
+        /// Set a given toggle state.
+        #[serde(rename = "action.devices.commands.SetToggles")]
+        SetToggles {
+            /// Key/value pair with the toggle name of the device as the key, and the new state as the value.
+            #[serde(rename = "updateToggleSettings")]
+            update_toggle_settings: HashMap<String, bool>,
+        },
     }
 }
 

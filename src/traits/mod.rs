@@ -31,6 +31,8 @@ pub mod start_stop;
 pub mod status_report;
 pub mod temperature_control;
 pub mod temperature_setting;
+pub mod timer;
+pub mod toggles;
 
 #[derive(Debug, PartialEq)]
 pub struct DeviceInfo {
@@ -200,14 +202,6 @@ pub trait Channel {
 pub trait ObjectDetection {
     // TODO
 }
-
-/// The Timer trait represents a timer on a device, primarily kitchen appliances such as ovens and microwaves, but not limited to them.
-pub trait Timer {}
-
-/// This trait belongs to any devices with settings that can only exist in one of two states.
-/// These settings can represent a physical button with an on/off or active/inactive state,
-/// a checkbox in HTML, or any other sort of specifically enabled/disabled element.
-pub trait Toggles {}
 
 /// his trait supports media devices which are able to control media playback (for example, resuming music that's paused).
 pub trait TransportControl {}

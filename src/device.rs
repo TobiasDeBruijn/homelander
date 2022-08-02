@@ -29,7 +29,9 @@ use crate::traits::start_stop::StartStop;
 use crate::traits::status_report::StatusReport;
 use crate::traits::temperature_control::TemperatureControl;
 use crate::traits::temperature_setting::TemperatureSetting;
-use crate::traits::{AppSelector, CameraStream, Channel, ObjectDetection, Timer, TransportControl, Volume};
+use crate::traits::timer::Timer;
+use crate::traits::toggles::Toggles;
+use crate::traits::{AppSelector, CameraStream, Channel, ObjectDetection, TransportControl, Volume};
 use crate::{fulfillment, ArmDisarm, Brightness, ColorSetting, CommandOutput, CommandStatus, CommandType, GoogleHomeDevice, SerializableError};
 use std::cell::RefCell;
 use std::error::Error;
@@ -272,6 +274,18 @@ impl<T: GoogleHomeDevice + Send + Sync + Debug + ?Sized + 'static> Device<T> {
             states.thermostat_mode = Some(d.borrow().get_thermostat_mode()?);
         }
 
+        if let Some(d) = &self.device_traits.timer {
+            // The API requires this to be -1 if there is no timer set
+            // Because we want idiomatic Rust, it's wrapped in an Option
+            // for if no timer is set
+            states.timer_remaining_sec = Some(d.borrow().get_timer_remaining_sec()?.unwrap_or(-1));
+            states.timer_paused = d.borrow().is_timer_paused()?;
+        }
+
+        if let Some(d) = &self.device_traits.toggles {
+            states.current_toggle_settings = Some(d.borrow().get_current_toggle_settings()?);
+        }
+
         Ok(states)
     }
 
@@ -341,8 +355,6 @@ impl<T: GoogleHomeDevice + Send + Sync + Debug + ?Sized + 'static> Device<T> {
             attributes.supported_dispense_presets = Some(d.borrow().get_supported_dispense_presets()?);
         }
 
-        // Dock has no attributes
-
         if let Some(d) = &self.device_traits.energy_storage {
             attributes.query_only_energy_storage = Some(d.borrow().is_query_only()?);
             attributes.energy_storage_distance_unit_for_ux = Some(d.borrow().get_distance_unit_for_ux()?);
@@ -379,9 +391,6 @@ impl<T: GoogleHomeDevice + Send + Sync + Debug + ?Sized + 'static> Device<T> {
             attributes.supported_effects = Some(d.borrow().get_supported_effects()?);
         }
 
-        // Locator has no attributes
-        // LockUnlock has no attributes
-
         if let Some(d) = &self.device_traits.media_state {
             attributes.support_activity_state = d.borrow().does_support_activity_state()?;
             attributes.support_playback_state = d.borrow().does_support_playback_state()?;
@@ -403,8 +412,6 @@ impl<T: GoogleHomeDevice + Send + Sync + Debug + ?Sized + 'static> Device<T> {
             attributes.supports_network_download_speed_test = d.borrow().supports_network_download_speed_test()?;
             attributes.supports_network_upload_speed_test = d.borrow().supports_network_upload_speed_test()?;
         }
-
-        // ObjectDetection has no attributes
 
         if let Some(d) = &self.device_traits.on_off {
             attributes.command_only_on_off = d.borrow().is_command_only()?;
@@ -454,6 +461,17 @@ impl<T: GoogleHomeDevice + Send + Sync + Debug + ?Sized + 'static> Device<T> {
             attributes.buffer_range_celsius = d.borrow().get_buffer_range_celsius()?;
             attributes.command_only_temperature_setting = d.borrow().is_command_only_temperature_setting()?;
             attributes.query_only_temperature_setting = d.borrow().is_query_only_temperature_setting()?;
+        }
+
+        if let Some(d) = &self.device_traits.timer {
+            attributes.max_timer_limit_sec = Some(d.borrow().get_max_timer_limit_sec()?);
+            attributes.command_only_timer = d.borrow().is_command_only_timer()?;
+        }
+
+        if let Some(d) = &self.device_traits.toggles {
+            attributes.available_toggles = Some(d.borrow().get_available_toggles()?);
+            attributes.command_only_toggles = d.borrow().is_command_only_toggles()?;
+            attributes.query_only_toggles = d.borrow().is_query_only_toggles()?;
         }
 
         // TODO the rest of the traits
@@ -934,6 +952,56 @@ impl<T: GoogleHomeDevice + Send + Sync + Debug + ?Sized + 'static> Device<T> {
                     device.borrow_mut().set_temperature_relative_weight(w)?;
                 }
             }
+            CommandType::TimerStart { timer_time_sec } => {
+                let device = match &mut self.device_traits.timer {
+                    Some(x) => x,
+                    None => panic!("Unsupported"),
+                };
+
+                device.borrow_mut().start_timer(timer_time_sec)?;
+            }
+            CommandType::TimerAdjust { timer_time_sec } => {
+                let device = match &mut self.device_traits.timer {
+                    Some(x) => x,
+                    None => panic!("Unsupported"),
+                };
+
+                device.borrow_mut().adjust_timer(timer_time_sec)?;
+            }
+            CommandType::TimerPause => {
+                let device = match &mut self.device_traits.timer {
+                    Some(x) => x,
+                    None => panic!("Unsupported"),
+                };
+
+                device.borrow_mut().pause_timer()?;
+            }
+            CommandType::TimerResume => {
+                let device = match &mut self.device_traits.timer {
+                    Some(x) => x,
+                    None => panic!("Unsupported"),
+                };
+
+                device.borrow_mut().resume_timer()?;
+            }
+            CommandType::TimerCancel => {
+                let device = match &mut self.device_traits.timer {
+                    Some(x) => x,
+                    None => panic!("Unsupported"),
+                };
+
+                device.borrow_mut().cancel_timer()?;
+            }
+            CommandType::SetToggles { update_toggle_settings } => {
+                let device = match &mut self.device_traits.toggles {
+                    Some(x) => x,
+                    None => panic!("Unsupported"),
+                };
+
+                for (k, v) in update_toggle_settings {
+                    device.borrow_mut().set_toggle(k, v)?;
+                }
+            }
             _ => {}
         }
         Ok(state)
@@ -1183,6 +1251,7 @@ impl<T: GoogleHomeDevice + Send + Sync + Debug + ?Sized + 'static> Device<T> {
         self.traits.push(Trait::StartStop);
     }
 
+    /// Register the [StatusReport] trait
     pub fn set_status_report(&mut self)
     where
         T: StatusReport + Sized,
@@ -1191,6 +1260,7 @@ impl<T: GoogleHomeDevice + Send + Sync + Debug + ?Sized + 'static> Device<T> {
         self.traits.push(Trait::StatusReport);
     }
 
+    /// Register the [TemperatureControl] trait
     pub fn set_temperature_control(&mut self)
     where
         T: TemperatureControl + Sized,
@@ -1199,12 +1269,31 @@ impl<T: GoogleHomeDevice + Send + Sync + Debug + ?Sized + 'static> Device<T> {
         self.traits.push(Trait::TemperatureControl);
     }
 
+    /// Register the [TemperatureSetting] trait
     pub fn set_temperature_setting(&mut self)
     where
         T: TemperatureSetting + Sized,
     {
         self.device_traits.temperature_setting = Some(self.inner.clone());
         self.traits.push(Trait::TemperatureSetting);
+    }
+
+    /// Register the [Timer] trait
+    pub fn set_timer(&mut self)
+    where
+        T: Timer + Sized,
+    {
+        self.device_traits.timer = Some(self.inner.clone());
+        self.traits.push(Trait::Timer);
+    }
+
+    /// Register the [Toggles] trait
+    pub fn set_toggles(&mut self)
+    where
+        T: Toggles + Sized,
+    {
+        self.device_traits.toggles = Some(self.inner.clone());
+        self.traits.push(Trait::Toggles);
     }
 
     // TODO rest of the traits
@@ -1249,6 +1338,7 @@ struct DeviceTraits {
     temperature_control: Option<Rc<RefCell<dyn TemperatureControl + Send + Sync>>>,
     temperature_setting: Option<Rc<RefCell<dyn TemperatureSetting + Send + Sync>>>,
     timer: Option<Rc<RefCell<dyn Timer + Send + Sync>>>,
+    toggles: Option<Rc<RefCell<dyn Toggles + Send + Sync>>>,
     transport_control: Option<Rc<RefCell<dyn TransportControl + Send + Sync>>>,
     volume: Option<Rc<RefCell<dyn Volume + Send + Sync>>>,
 }

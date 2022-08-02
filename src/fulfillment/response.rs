@@ -31,6 +31,7 @@ pub mod sync {
     use crate::traits::rotation::RotationDegreeRange;
     use crate::traits::sensor_state::SupportedSensorState;
     use crate::traits::temperature_setting::ThermostatMode;
+    use crate::traits::toggles::AvailableToggle;
     use crate::traits::{TemperatureRange, TemperatureUnit};
     use serde::Serialize;
 
@@ -131,6 +132,11 @@ pub mod sync {
         pub buffer_range_celsius: Option<f32>,
         pub command_only_temperature_setting: Option<bool>,
         pub query_only_temperature_setting: Option<bool>,
+        pub max_timer_limit_sec: Option<i32>,
+        pub command_only_timer: Option<bool>,
+        pub available_toggles: Option<Vec<AvailableToggle>>,
+        pub command_only_toggles: Option<bool>,
+        pub query_only_toggles: Option<bool>,
     }
 
     #[derive(Debug, PartialEq, Serialize)]
@@ -274,6 +280,9 @@ pub mod query {
         pub thermostat_humidity_ambient: Option<f32>,
         #[serde(flatten)]
         pub thermostat_mode: Option<QueryThermostatMode>,
+        pub timer_remaining_sec: Option<i32>,
+        pub timer_paused: Option<bool>,
+        pub current_toggle_settings: Option<HashMap<String, bool>>,
     }
 }
 

@@ -27,6 +27,10 @@ pub mod run_cycle;
 pub mod scene;
 pub mod sensor_state;
 pub mod software_update;
+pub mod start_stop;
+pub mod status_report;
+pub mod temperature_control;
+pub mod temperature_setting;
 
 #[derive(Debug, PartialEq)]
 pub struct DeviceInfo {
@@ -145,6 +149,24 @@ pub enum SizeUnit {
     Teaspoons,
 }
 
+/// Supported temperature range of the device.
+#[derive(Debug, PartialEq, Serialize)]
+pub struct TemperatureRange {
+    /// Minimum temperature for the range, in degrees Celsius.
+    pub min_threshold_celsius: f32,
+    ///Maximum temperature for the range, in degrees Celsius.
+    pub max_threshold_celsius: f32,
+}
+
+/// Temperature unit used in responses to the user.
+#[derive(Debug, PartialEq, Serialize)]
+pub enum TemperatureUnit {
+    #[serde(rename = "C")]
+    Celsius,
+    #[serde(rename = "F")]
+    Fahrenheit,
+}
+
 /// Name synonyms in each supported language.
 #[derive(Debug, PartialEq, Serialize)]
 pub struct Synonym {
@@ -178,21 +200,6 @@ pub trait Channel {
 pub trait ObjectDetection {
     // TODO
 }
-
-/// Starting and stopping a device serves a similar function to turning it on and off. Devices that inherit this trait function differently when
-/// turned on and when started. Unlike devices that simply have an on and off state,
-/// some devices that can start and stop are also able to pause while performing operation.
-pub trait StartStop {}
-
-/// This trait reports the current status or state of a specific device or a connected group of devices.
-pub trait StatusReport {}
-
-/// Trait for devices (other than thermostats) that support controlling temperature,
-/// either within or around the device. This includes devices such as ovens and refrigerators.
-pub trait TemperatureControl {}
-
-/// This trait covers handling both temperature point and modes.
-pub trait TemperatureSetting {}
 
 /// The Timer trait represents a timer on a device, primarily kitchen appliances such as ovens and microwaves, but not limited to them.
 pub trait Timer {}

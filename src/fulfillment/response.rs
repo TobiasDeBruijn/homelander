@@ -30,6 +30,8 @@ pub mod sync {
     use crate::traits::open_close::OpenDirection;
     use crate::traits::rotation::RotationDegreeRange;
     use crate::traits::sensor_state::SupportedSensorState;
+    use crate::traits::temperature_setting::ThermostatMode;
+    use crate::traits::{TemperatureRange, TemperatureUnit};
     use serde::Serialize;
 
     #[derive(Debug, PartialEq, Serialize)]
@@ -115,6 +117,20 @@ pub mod sync {
         pub command_only_rotation: Option<bool>,
         pub scene_reversible: Option<bool>,
         pub sensor_states_supported: Option<Vec<SupportedSensorState>>,
+        pub pausable: Option<bool>,
+        pub available_zones: Option<Vec<String>>,
+        pub temperature_range: Option<TemperatureRange>,
+        pub temperature_step_celsius: Option<f32>,
+        #[serde(rename = "temperatureUnitForUX")]
+        pub temperature_unit_for_ux: Option<TemperatureUnit>,
+        pub command_only_temperature_control: Option<bool>,
+        pub query_only_temperature_control: Option<bool>,
+        pub available_thermostat_modes: Option<Vec<ThermostatMode>>,
+        pub thermostat_temperature_range: Option<TemperatureRange>,
+        pub thermostat_temperature_unit: Option<TemperatureUnit>,
+        pub buffer_range_celsius: Option<f32>,
+        pub command_only_temperature_setting: Option<bool>,
+        pub query_only_temperature_setting: Option<bool>,
     }
 
     #[derive(Debug, PartialEq, Serialize)]
@@ -146,6 +162,8 @@ pub mod query {
     use crate::traits::open_close::OpenState;
     use crate::traits::run_cycle::CurrentRunCycle;
     use crate::traits::sensor_state::CurrentSensorState;
+    use crate::traits::status_report::CurrentStatusReport;
+    use crate::traits::temperature_setting::{QueryThermostatMode, ThermostatMode};
     use crate::traits::SizeUnit;
     use serde::Serialize;
     use std::collections::HashMap;
@@ -245,6 +263,17 @@ pub mod query {
         pub current_cycle_remaining_time: Option<i32>,
         pub current_sensor_state_data: Option<Vec<CurrentSensorState>>,
         pub last_software_update_unix_timestamp_sec: Option<i64>,
+        pub is_running: Option<bool>,
+        pub is_paused: Option<bool>,
+        pub active_zones: Option<Vec<String>>,
+        pub current_status_report: Option<Vec<CurrentStatusReport>>,
+        pub temperature_setpoint_celsius: Option<f32>,
+        pub temperature_ambient_celsius: Option<f32>,
+        pub active_thermostat_mode: Option<ThermostatMode>,
+        pub target_temp_reached_estimate_unix_timestamp_sec: Option<i64>,
+        pub thermostat_humidity_ambient: Option<f32>,
+        #[serde(flatten)]
+        pub thermostat_mode: Option<QueryThermostatMode>,
     }
 }
 

@@ -34,15 +34,15 @@ The following [Traits](https://developers.google.com/assistant/smarthome/traits)
 - Scene
 - SensorState
 - SoftwareUpdate
+- StartStop
+- StatusReport
+- TemperatureControl
 
 These traits are not yet implemented:
 - AppSelector
 - CameraStream
 - ObjectDetection
 - Channel
-- StartStop
-- StatusReport
-- TemperatureControl
 - TemperatureSetting
 - Timer
 - Toggles

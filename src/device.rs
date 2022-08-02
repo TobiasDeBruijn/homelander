@@ -25,9 +25,11 @@ use crate::traits::run_cycle::RunCycle;
 use crate::traits::scene::Scene;
 use crate::traits::sensor_state::SensorState;
 use crate::traits::software_update::SoftwareUpdate;
-use crate::traits::{
-    AppSelector, CameraStream, Channel, ObjectDetection, StartStop, StatusReport, TemperatureControl, TemperatureSetting, Timer, TransportControl, Volume,
-};
+use crate::traits::start_stop::StartStop;
+use crate::traits::status_report::StatusReport;
+use crate::traits::temperature_control::TemperatureControl;
+use crate::traits::temperature_setting::TemperatureSetting;
+use crate::traits::{AppSelector, CameraStream, Channel, ObjectDetection, Timer, TransportControl, Volume};
 use crate::{fulfillment, ArmDisarm, Brightness, ColorSetting, CommandOutput, CommandStatus, CommandType, GoogleHomeDevice, SerializableError};
 use std::cell::RefCell;
 use std::error::Error;
@@ -248,6 +250,28 @@ impl<T: GoogleHomeDevice + Send + Sync + Debug + ?Sized + 'static> Device<T> {
             states.last_software_update_unix_timestamp_sec = Some(d.borrow().get_last_software_update_unix_timestamp_sec()?);
         }
 
+        if let Some(d) = &self.device_traits.start_stop {
+            states.is_running = Some(d.borrow().is_running()?);
+            states.is_paused = d.borrow().is_paused()?;
+            states.active_zones = d.borrow().get_active_zones()?;
+        }
+
+        if let Some(d) = &self.device_traits.status_report {
+            states.current_status_report = Some(d.borrow().get_current_status_report()?);
+        }
+
+        if let Some(d) = &self.device_traits.temperature_control {
+            states.temperature_setpoint_celsius = Some(d.borrow().get_temperature_setpoint_celsius()?);
+            states.temperature_ambient_celsius = Some(d.borrow().get_temperatuer_ambient_celsius()?);
+        }
+
+        if let Some(d) = &self.device_traits.temperature_setting {
+            states.active_thermostat_mode = Some(d.borrow().get_active_thermostat_mode()?);
+            states.target_temp_reached_estimate_unix_timestamp_sec = d.borrow().get_target_temp_reached_estimate_unix_timestamp_sec()?;
+            states.thermostat_humidity_ambient = d.borrow().get_thermostat_humidity_ambient()?;
+            states.thermostat_mode = Some(d.borrow().get_thermostat_mode()?);
+        }
+
         Ok(states)
     }
 
@@ -408,6 +432,28 @@ impl<T: GoogleHomeDevice + Send + Sync + Debug + ?Sized + 'static> Device<T> {
 
         if let Some(d) = &self.device_traits.sensor_state {
             attributes.sensor_states_supported = Some(d.borrow().get_supported_sensor_states()?);
+        }
+
+        if let Some(d) = &self.device_traits.start_stop {
+            attributes.pausable = d.borrow().is_pausable()?;
+            attributes.available_zones = d.borrow().get_available_zones()?;
+        }
+
+        if let Some(d) = &self.device_traits.temperature_control {
+            attributes.temperature_range = Some(d.borrow().get_temperature_range()?);
+            attributes.temperature_step_celsius = d.borrow().get_temperature_step_celsius()?;
+            attributes.temperature_unit_for_ux = Some(d.borrow().get_temperature_unit_for_ux()?);
+            attributes.command_only_temperature_control = d.borrow().is_command_only_temperature_control()?;
+            attributes.query_only_temperature_control = d.borrow().is_query_only_temperature_control()?;
+        }
+
+        if let Some(d) = &self.device_traits.temperature_setting {
+            attributes.available_thermostat_modes = Some(d.borrow().get_available_thermostat_modes()?);
+            attributes.thermostat_temperature_range = d.borrow().get_thermostat_temperature_range()?;
+            attributes.thermostat_temperature_unit = Some(d.borrow().get_thermostat_temperature_unit()?);
+            attributes.buffer_range_celsius = d.borrow().get_buffer_range_celsius()?;
+            attributes.command_only_temperature_setting = d.borrow().is_command_only_temperature_setting()?;
+            attributes.query_only_temperature_setting = d.borrow().is_query_only_temperature_setting()?;
         }
 
         // TODO the rest of the traits
@@ -814,6 +860,80 @@ impl<T: GoogleHomeDevice + Send + Sync + Debug + ?Sized + 'static> Device<T> {
 
                 device.borrow_mut().perform_update()?;
             }
+            CommandType::StartStop { start, zone, multiple_zones } => {
+                let device = match &mut self.device_traits.start_stop {
+                    Some(x) => x,
+                    None => panic!("Unsupported"),
+                };
+
+                let zones = if let Some(zone) = zone { Some(vec![zone]) } else { multiple_zones };
+
+                device.borrow_mut().start_stop(start, zones)?;
+            }
+            CommandType::PauseUnpause { pause } => {
+                let device = match &mut self.device_traits.start_stop {
+                    Some(x) => x,
+                    None => panic!("Unsupported"),
+                };
+
+                device.borrow_mut().pause_unpause(pause)?;
+            }
+            CommandType::SetTemperature { temperature } => {
+                let device = match &mut self.device_traits.temperature_control {
+                    Some(x) => x,
+                    None => panic!("Unsupported"),
+                };
+
+                device.borrow_mut().set_temperature(temperature)?;
+            }
+            CommandType::ThermostatTemperatureSetpoint {
+                thermostat_temperature_setpoint,
+            } => {
+                let device = match &mut self.device_traits.temperature_setting {
+                    Some(x) => x,
+                    None => panic!("Unsupported"),
+                };
+
+                device.borrow_mut().set_temperature_setpoint(thermostat_temperature_setpoint)?
+            }
+            CommandType::ThermostatTemperatureSetRange {
+                thermostat_temperature_setpoint_high,
+                thermostat_temperature_setpoint_low,
+            } => {
+                let device = match &mut self.device_traits.temperature_setting {
+                    Some(x) => x,
+                    None => panic!("Unsupported"),
+                };
+
+                device
+                    .borrow_mut()
+                    .set_temperature_set_range(thermostat_temperature_setpoint_high, thermostat_temperature_setpoint_low)?;
+            }
+            CommandType::ThermostatSetMode { thermostat_mode } => {
+                let device = match &mut self.device_traits.temperature_setting {
+                    Some(x) => x,
+                    None => panic!("Unsupported"),
+                };
+
+                device.borrow_mut().set_thermostat_mode(thermostat_mode)?;
+            }
+            CommandType::TemperatureRelative {
+                thermostat_temperature_relative_degree,
+                thermostat_temperature_relative_weight,
+            } => {
+                let device = match &mut self.device_traits.temperature_setting {
+                    Some(x) => x,
+                    None => panic!("Unsupported"),
+                };
+
+                if let Some(t) = thermostat_temperature_relative_degree {
+                    device.borrow_mut().set_temperature_relative_degree(t)?;
+                }
+
+                if let Some(w) = thermostat_temperature_relative_weight {
+                    device.borrow_mut().set_temperature_relative_weight(w)?;
+                }
+            }
             _ => {}
         }
         Ok(state)
@@ -1052,6 +1172,39 @@ impl<T: GoogleHomeDevice + Send + Sync + Debug + ?Sized + 'static> Device<T> {
     {
         self.device_traits.software_update = Some(self.inner.clone());
         self.traits.push(Trait::SoftwareUpdate);
+    }
+
+    /// Register the [StartStop] trait
+    pub fn set_start_stop(&mut self)
+    where
+        T: StartStop + Sized,
+    {
+        self.device_traits.start_stop = Some(self.inner.clone());
+        self.traits.push(Trait::StartStop);
+    }
+
+    pub fn set_status_report(&mut self)
+    where
+        T: StatusReport + Sized,
+    {
+        self.device_traits.status_report = Some(self.inner.clone());
+        self.traits.push(Trait::StatusReport);
+    }
+
+    pub fn set_temperature_control(&mut self)
+    where
+        T: TemperatureControl + Sized,
+    {
+        self.device_traits.temperature_control = Some(self.inner.clone());
+        self.traits.push(Trait::TemperatureControl);
+    }
+
+    pub fn set_temperature_setting(&mut self)
+    where
+        T: TemperatureSetting + Sized,
+    {
+        self.device_traits.temperature_setting = Some(self.inner.clone());
+        self.traits.push(Trait::TemperatureSetting);
     }
 
     // TODO rest of the traits

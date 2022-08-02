@@ -36,6 +36,7 @@ pub mod execute {
     use crate::traits::color_setting::ColorCommand;
     use crate::traits::cook::CookingMode;
     use crate::traits::open_close::OpenDirection;
+    use crate::traits::temperature_setting::ThermostatMode;
     use crate::traits::{Language, SizeUnit};
     use serde::Deserialize;
     use std::collections::HashMap;
@@ -333,6 +334,63 @@ pub mod execute {
         /// Update the device
         #[serde(rename = "action.devices.commands.SoftwareUpdate")]
         SoftwareUpdate,
+        /// Start or stop the device.
+        #[serde(rename = "action.devices.commands.StartStop")]
+        StartStop {
+            /// True to start device operation, false to stop.
+            start: bool,
+            /// Indicates zone in which to start running.
+            zone: Option<String>,
+            /// Indicates two or more zones in which to start running. Will be set instead of zone parameter.
+            #[serde(rename = "multipleZones")]
+            multiple_zones: Option<Vec<String>>,
+        },
+        /// Pause or unpause device operation.
+        #[serde(rename = "action.devices.commands.PauseUnpause")]
+        PauseUnpause {
+            /// True to pause, false to unpause.
+            pause: bool,
+        },
+        /// Set the temperature to a specific value.
+        #[serde(rename = "action.devices.commands.SetTemperature")]
+        SetTemperature {
+            /// The temperature to set, in degrees Celsius. Must fall within temperatureRange.
+            temperature: f32,
+        },
+        /// Set the target temperature for a thermostat device.
+        #[serde(rename = "action.devices.commands.ThermostatTemperatureSetpoint")]
+        ThermostatTemperatureSetpoint {
+            /// Target temperature setpoint. Supports up to one decimal place.
+            #[serde(rename = "thermostatTemperatureSetpoint")]
+            thermostat_temperature_setpoint: f32,
+        },
+        /// Set a target temperature range for a thermostat device.
+        #[serde(rename = "action.devices.commands.ThermostatTemperatureSetRange")]
+        ThermostatTemperatureSetRange {
+            /// High target setpoint for the range. Requires heatcool mode support.
+            #[serde(rename = "thermostatTemperatureSetpointHigh")]
+            thermostat_temperature_setpoint_high: f32,
+            /// Low target setpoint for the range. Requires heatcool mode support.
+            #[serde(rename = "thermostatTemperatureSetpointLow")]
+            thermostat_temperature_setpoint_low: f32,
+        },
+        /// Set the target operating mode for a thermostat device.
+        #[serde(rename = "action.devices.commands.ThermostatSetMode")]
+        ThermostatSetMode {
+            /// Target mode, from the list of availableThermostatModes.
+            #[serde(rename = "thermostatMode")]
+            thermostat_mode: ThermostatMode,
+        },
+        /// The payload contains one of the following:
+        #[serde(rename = "action.devices.commands.TemperatureRelative")]
+        TemperatureRelative {
+            /// The exact number of degrees for the temperature to change (for example, "Turn down 5 degrees").
+            #[serde(rename = "thermostatTemperatureRelativeDegree")]
+            thermostat_temperature_relative_degree: Option<f32>,
+            /// This indicates the amount of ambiguous temperature change from a small amount ("Turn down a little"), to a large amount ("A lot warmer").
+            #[serde(rename = "thermostatTemperatureRelativeWeight")]
+            thermostat_temperature_relative_weight: Option<f32>,
+        },
     }
 }
 

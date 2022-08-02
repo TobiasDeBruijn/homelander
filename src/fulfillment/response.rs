@@ -29,6 +29,7 @@ pub mod sync {
     use crate::traits::modes::AvailableMode;
     use crate::traits::open_close::OpenDirection;
     use crate::traits::rotation::RotationDegreeRange;
+    use crate::traits::sensor_state::SupportedSensorState;
     use serde::Serialize;
 
     #[derive(Debug, PartialEq, Serialize)]
@@ -112,6 +113,8 @@ pub mod sync {
         pub rotation_degrees_range: Option<RotationDegreeRange>,
         pub supports_continuous_rotation: Option<bool>,
         pub command_only_rotation: Option<bool>,
+        pub scene_reversible: Option<bool>,
+        pub sensor_states_supported: Option<Vec<SupportedSensorState>>,
     }
 
     #[derive(Debug, PartialEq, Serialize)]
@@ -142,6 +145,7 @@ pub mod query {
     use crate::traits::network_control::{DownloadSpeedTestResult, NetworkProfileState, NetworkSettings, UploadSpeedTestResult};
     use crate::traits::open_close::OpenState;
     use crate::traits::run_cycle::CurrentRunCycle;
+    use crate::traits::sensor_state::CurrentSensorState;
     use crate::traits::SizeUnit;
     use serde::Serialize;
     use std::collections::HashMap;
@@ -239,6 +243,8 @@ pub mod query {
         pub current_run_cycle: Option<Vec<CurrentRunCycle>>,
         pub current_total_remaining_time: Option<i32>,
         pub current_cycle_remaining_time: Option<i32>,
+        pub current_sensor_state_data: Option<Vec<CurrentSensorState>>,
+        pub last_software_update_unix_timestamp_sec: Option<i64>,
     }
 }
 

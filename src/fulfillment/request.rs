@@ -324,6 +324,15 @@ pub mod execute {
             #[serde(rename = "rotationPercent")]
             rotation_percent: Option<f32>,
         },
+        /// Activate or deactivate a scene.
+        #[serde(rename = "action.devices.commands.ActivateScene")]
+        ActivateScene {
+            /// True to cancel a scene if it is reversible, false to activate a scene.
+            deactivate: bool,
+        },
+        /// Update the device
+        #[serde(rename = "action.devices.commands.SoftwareUpdate")]
+        SoftwareUpdate,
     }
 }
 

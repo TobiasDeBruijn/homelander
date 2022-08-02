@@ -24,6 +24,9 @@ pub mod open_close;
 pub mod reboot;
 pub mod rotation;
 pub mod run_cycle;
+pub mod scene;
+pub mod sensor_state;
+pub mod software_update;
 
 #[derive(Debug, PartialEq)]
 pub struct DeviceInfo {
@@ -175,17 +178,6 @@ pub trait Channel {
 pub trait ObjectDetection {
     // TODO
 }
-
-/// This trait covers both quantitative measurement (for example,
-/// air quality index or smoke level) and qualitative state (for example, whether the air quality is healthy
-/// or whether the smoke level is low or high).
-pub trait SensorState {}
-
-/// In the case of scenes, the type maps 1:1 to the trait, as scenes don't combine with other traits to form composite devices.
-pub trait Scene {}
-
-/// This trait belongs to devices that support software updates such as a router. Optionally, these devices may report the time of the last successful update.
-pub trait SoftwareUpdate {}
 
 /// Starting and stopping a device serves a similar function to turning it on and off. Devices that inherit this trait function differently when
 /// turned on and when started. Unlike devices that simply have an on and off state,

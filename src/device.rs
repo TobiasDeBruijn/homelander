@@ -22,9 +22,11 @@ use crate::traits::open_close::OpenClose;
 use crate::traits::reboot::Reboot;
 use crate::traits::rotation::Rotation;
 use crate::traits::run_cycle::RunCycle;
+use crate::traits::scene::Scene;
+use crate::traits::sensor_state::SensorState;
+use crate::traits::software_update::SoftwareUpdate;
 use crate::traits::{
-    AppSelector, CameraStream, Channel, ObjectDetection, Scene, SensorState, SoftwareUpdate, StartStop, StatusReport, TemperatureControl, TemperatureSetting,
-    Timer, TransportControl, Volume,
+    AppSelector, CameraStream, Channel, ObjectDetection, StartStop, StatusReport, TemperatureControl, TemperatureSetting, Timer, TransportControl, Volume,
 };
 use crate::{fulfillment, ArmDisarm, Brightness, ColorSetting, CommandOutput, CommandStatus, CommandType, GoogleHomeDevice, SerializableError};
 use std::cell::RefCell;
@@ -238,6 +240,14 @@ impl<T: GoogleHomeDevice + Send + Sync + Debug + ?Sized + 'static> Device<T> {
             states.current_cycle_remaining_time = Some(d.borrow().get_current_cycle_remaining_time()?);
         }
 
+        if let Some(d) = &self.device_traits.sensor_state {
+            states.current_sensor_state_data = Some(d.borrow().get_current_sensor_states()?);
+        }
+
+        if let Some(d) = &self.device_traits.software_update {
+            states.last_software_update_unix_timestamp_sec = Some(d.borrow().get_last_software_update_unix_timestamp_sec()?);
+        }
+
         Ok(states)
     }
 
@@ -390,6 +400,14 @@ impl<T: GoogleHomeDevice + Send + Sync + Debug + ?Sized + 'static> Device<T> {
             attributes.rotation_degrees_range = Some(d.borrow().get_rotation_degree_range()?);
             attributes.supports_continuous_rotation = d.borrow().supports_continuous_rotation()?;
             attributes.command_only_rotation = d.borrow().is_command_only_rotation()?;
+        }
+
+        if let Some(d) = &self.device_traits.scene {
+            attributes.scene_reversible = d.borrow().is_reversible()?;
+        }
+
+        if let Some(d) = &self.device_traits.sensor_state {
+            attributes.sensor_states_supported = Some(d.borrow().get_supported_sensor_states()?);
         }
 
         // TODO the rest of the traits
@@ -776,6 +794,26 @@ impl<T: GoogleHomeDevice + Send + Sync + Debug + ?Sized + 'static> Device<T> {
                     device.borrow_mut().set_rotation_percent(per)?;
                 }
             }
+            CommandType::ActivateScene { deactivate } => {
+                let device = match &mut self.device_traits.scene {
+                    Some(x) => x,
+                    None => panic!("Unsupported"),
+                };
+
+                if deactivate {
+                    device.borrow_mut().deactivate()?;
+                } else {
+                    device.borrow_mut().activate()?;
+                }
+            }
+            CommandType::SoftwareUpdate => {
+                let device = match &mut self.device_traits.software_update {
+                    Some(x) => x,
+                    None => panic!("Unsupported"),
+                };
+
+                device.borrow_mut().perform_update()?;
+            }
             _ => {}
         }
         Ok(state)
@@ -987,6 +1025,33 @@ impl<T: GoogleHomeDevice + Send + Sync + Debug + ?Sized + 'static> Device<T> {
     {
         self.device_traits.run_cycle = Some(self.inner.clone());
         self.traits.push(Trait::RunCycle);
+    }
+
+    /// Register the [Scene] trait
+    pub fn set_scene(&mut self)
+    where
+        T: Scene + Sized,
+    {
+        self.device_traits.scene = Some(self.inner.clone());
+        self.traits.push(Trait::Scene);
+    }
+
+    /// Register the [SensorState] trait
+    pub fn set_sensor_state(&mut self)
+    where
+        T: SensorState + Sized,
+    {
+        self.device_traits.sensor_state = Some(self.inner.clone());
+        self.traits.push(Trait::SensorState);
+    }
+
+    /// Register the [SoftwareUpdate] trait
+    pub fn set_software_update(&mut self)
+    where
+        T: SoftwareUpdate + Sized,
+    {
+        self.device_traits.software_update = Some(self.inner.clone());
+        self.traits.push(Trait::SoftwareUpdate);
     }
 
     // TODO rest of the traits

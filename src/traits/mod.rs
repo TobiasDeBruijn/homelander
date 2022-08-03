@@ -33,6 +33,8 @@ pub mod temperature_control;
 pub mod temperature_setting;
 pub mod timer;
 pub mod toggles;
+pub mod transport_control;
+pub mod volume;
 
 #[derive(Debug, PartialEq)]
 pub struct DeviceInfo {
@@ -202,9 +204,3 @@ pub trait Channel {
 pub trait ObjectDetection {
     // TODO
 }
-
-/// his trait supports media devices which are able to control media playback (for example, resuming music that's paused).
-pub trait TransportControl {}
-
-/// This trait belongs to devices which are able to change volume (for example, setting the volume to a certain level, mute, or unmute).
-pub trait Volume {}

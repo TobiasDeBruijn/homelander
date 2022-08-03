@@ -31,7 +31,9 @@ use crate::traits::temperature_control::TemperatureControl;
 use crate::traits::temperature_setting::TemperatureSetting;
 use crate::traits::timer::Timer;
 use crate::traits::toggles::Toggles;
-use crate::traits::{AppSelector, CameraStream, Channel, ObjectDetection, TransportControl, Volume};
+use crate::traits::transport_control::TransportControl;
+use crate::traits::volume::Volume;
+use crate::traits::{AppSelector, CameraStream, Channel, ObjectDetection};
 use crate::{fulfillment, ArmDisarm, Brightness, ColorSetting, CommandOutput, CommandStatus, CommandType, GoogleHomeDevice, SerializableError};
 use std::cell::RefCell;
 use std::error::Error;
@@ -282,6 +284,11 @@ impl<T: GoogleHomeDevice + Send + Sync + Debug + ?Sized + 'static> Device<T> {
             states.timer_paused = d.borrow().is_timer_paused()?;
         }
 
+        if let Some(d) = &self.device_traits.volume {
+            states.current_volume = d.borrow().get_current_volume()?;
+            states.is_muted = d.borrow().is_muted()?
+        }
+
         if let Some(d) = &self.device_traits.toggles {
             states.current_toggle_settings = Some(d.borrow().get_current_toggle_settings()?);
         }
@@ -472,6 +479,18 @@ impl<T: GoogleHomeDevice + Send + Sync + Debug + ?Sized + 'static> Device<T> {
             attributes.available_toggles = Some(d.borrow().get_available_toggles()?);
             attributes.command_only_toggles = d.borrow().is_command_only_toggles()?;
             attributes.query_only_toggles = d.borrow().is_query_only_toggles()?;
+        }
+
+        if let Some(d) = &self.device_traits.transport_control {
+            attributes.transport_control_supported_commands = Some(d.borrow().get_supported_control_commands()?);
+        }
+
+        if let Some(d) = &self.device_traits.volume {
+            attributes.volume_max_level = Some(d.borrow().get_volume_max_level()?);
+            attributes.volume_can_mute_and_unmute = Some(d.borrow().can_mute_and_unmute()?);
+            attributes.volume_default_percentage = d.borrow().get_volume_default_percentage()?;
+            attributes.level_step_size = d.borrow().get_level_step_size()?;
+            attributes.command_only_volume = d.borrow().is_command_only_volume()?;
         }
 
         // TODO the rest of the traits
@@ -1002,6 +1021,123 @@ impl<T: GoogleHomeDevice + Send + Sync + Debug + ?Sized + 'static> Device<T> {
                     device.borrow_mut().set_toggle(k, v)?;
                 }
             }
+            CommandType::MediaStop => {
+                let device = match &mut self.device_traits.transport_control {
+                    Some(x) => x,
+                    None => panic!("Unsupported"),
+                };
+
+                device.borrow_mut().media_stop()?;
+            }
+            CommandType::MediaNext => {
+                let device = match &mut self.device_traits.transport_control {
+                    Some(x) => x,
+                    None => panic!("Unsupported"),
+                };
+
+                device.borrow_mut().media_next()?;
+            }
+            CommandType::MediaPrevious => {
+                let device = match &mut self.device_traits.transport_control {
+                    Some(x) => x,
+                    None => panic!("Unsupported"),
+                };
+
+                device.borrow_mut().media_previous()?;
+            }
+            CommandType::MediaPause => {
+                let device = match &mut self.device_traits.transport_control {
+                    Some(x) => x,
+                    None => panic!("Unsupported"),
+                };
+
+                device.borrow_mut().media_pause()?;
+            }
+            CommandType::MediaResume => {
+                let device = match &mut self.device_traits.transport_control {
+                    Some(x) => x,
+                    None => panic!("Unsupported"),
+                };
+
+                device.borrow_mut().media_resume()?;
+            }
+            CommandType::MediaSeekRelative { relative_position_ms } => {
+                let device = match &mut self.device_traits.transport_control {
+                    Some(x) => x,
+                    None => panic!("Unsupported"),
+                };
+
+                device.borrow_mut().media_seek_relative(relative_position_ms)?;
+            }
+            CommandType::MediaSeekToPosition { abs_position_ms } => {
+                let device = match &mut self.device_traits.transport_control {
+                    Some(x) => x,
+                    None => panic!("Unsupported"),
+                };
+
+                device.borrow_mut().media_seek_to_position(abs_position_ms)?;
+            }
+            CommandType::MediaRepeatMode { is_on, is_single } => {
+                let device = match &mut self.device_traits.transport_control {
+                    Some(x) => x,
+                    None => panic!("Unsupported"),
+                };
+
+                device.borrow_mut().media_repeat_mode(is_on, is_single.unwrap_or(false))?;
+            }
+            CommandType::MediaShuffle => {
+                let device = match &mut self.device_traits.transport_control {
+                    Some(x) => x,
+                    None => panic!("Unsupported"),
+                };
+
+                device.borrow_mut().media_shuffle()?;
+            }
+            CommandType::MediaClosedCaptioningOn {
+                closed_captioning_language,
+                user_query_language,
+            } => {
+                let device = match &mut self.device_traits.transport_control {
+                    Some(x) => x,
+                    None => panic!("Unsupported"),
+                };
+
+                device
+                    .borrow_mut()
+                    .media_closed_captioning_on(closed_captioning_language, user_query_language)?;
+            }
+            CommandType::MediaClosedCaptioningOff => {
+                let device = match &mut self.device_traits.transport_control {
+                    Some(x) => x,
+                    None => panic!("Unsupported"),
+                };
+
+                device.borrow_mut().media_closed_captioning_off()?;
+            }
+            CommandType::Mute { mute } => {
+                let device = match &mut self.device_traits.volume {
+                    Some(x) => x,
+                    None => panic!("Unsupported"),
+                };
+
+                device.borrow_mut().mute(mute)?;
+            }
+            CommandType::SetVolume { volume_level } => {
+                let device = match &mut self.device_traits.volume {
+                    Some(x) => x,
+                    None => panic!("Unsupported"),
+                };
+
+                device.borrow_mut().set_volume(volume_level)?;
+            }
+            CommandType::VolumeRelative { relative_steps } => {
+                let device = match &mut self.device_traits.volume {
+                    Some(x) => x,
+                    None => panic!("Unsupported"),
+                };
+
+                device.borrow_mut().set_volume_relative(relative_steps)?;
+            }
             _ => {}
         }
         Ok(state)
@@ -1294,6 +1430,24 @@ impl<T: GoogleHomeDevice + Send + Sync + Debug + ?Sized + 'static> Device<T> {
     {
         self.device_traits.toggles = Some(self.inner.clone());
         self.traits.push(Trait::Toggles);
+    }
+
+    /// Register the [TransportControl] trait
+    pub fn set_transport_control(&mut self)
+    where
+        T: TransportControl + Sized,
+    {
+        self.device_traits.transport_control = Some(self.inner.clone());
+        self.traits.push(Trait::TransportControl)
+    }
+
+    /// Register the [Volume] trait
+    pub fn set_volume(&mut self)
+    where
+        T: Volume + Sized,
+    {
+        self.device_traits.volume = Some(self.inner.clone());
+        self.traits.push(Trait::Volume);
     }
 
     // TODO rest of the traits

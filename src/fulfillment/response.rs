@@ -32,6 +32,7 @@ pub mod sync {
     use crate::traits::sensor_state::SupportedSensorState;
     use crate::traits::temperature_setting::ThermostatMode;
     use crate::traits::toggles::AvailableToggle;
+    use crate::traits::transport_control::SupportedCommand;
     use crate::traits::{TemperatureRange, TemperatureUnit};
     use serde::Serialize;
 
@@ -137,6 +138,12 @@ pub mod sync {
         pub available_toggles: Option<Vec<AvailableToggle>>,
         pub command_only_toggles: Option<bool>,
         pub query_only_toggles: Option<bool>,
+        pub transport_control_supported_commands: Option<Vec<SupportedCommand>>,
+        pub volume_max_level: Option<i32>,
+        pub volume_can_mute_and_unmute: Option<bool>,
+        pub volume_default_percentage: Option<i32>,
+        pub level_step_size: Option<i32>,
+        pub command_only_volume: Option<bool>,
     }
 
     #[derive(Debug, PartialEq, Serialize)]
@@ -283,6 +290,8 @@ pub mod query {
         pub timer_remaining_sec: Option<i32>,
         pub timer_paused: Option<bool>,
         pub current_toggle_settings: Option<HashMap<String, bool>>,
+        pub current_volume: Option<i32>,
+        pub is_muted: Option<bool>,
     }
 }
 

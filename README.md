@@ -40,14 +40,14 @@ The following [Traits](https://developers.google.com/assistant/smarthome/traits)
 - TemperatureSetting
 - Timer
 - Toggles
+- TransportControl
+- Volume
 
 These traits are not yet implemented:
 - AppSelector
 - CameraStream
 - ObjectDetection
 - Channel
-- TransportControl
-- Volume
 
 They are however planned to be implemented, though. You can help by submitting a pull request with the implementation. 
 You will find the traits definition in the `traits` module, they are completely non-functional though.

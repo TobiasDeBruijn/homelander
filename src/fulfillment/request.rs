@@ -421,6 +421,84 @@ pub mod execute {
             #[serde(rename = "updateToggleSettings")]
             update_toggle_settings: HashMap<String, bool>,
         },
+        /// Pause media playback.
+        #[serde(rename = "action.devices.commands.mediaStop")]
+        MediaStop,
+        /// Skip to next media item.
+        #[serde(rename = "action.devices.commands.mediaNext")]
+        MediaNext,
+        /// Skip to previous media item.
+        #[serde(rename = "action.devices.commands.mediaPrevious")]
+        MediaPrevious,
+        /// Pause media playback.
+        #[serde(rename = "action.devices.commands.mediaPause")]
+        MediaPause,
+        /// Resume media playback.
+        #[serde(rename = "action.devices.commands.mediaResume")]
+        MediaResume,
+        /// Seek to a relative position.
+        #[serde(rename = "action.devices.commands.mediaSeekRelative")]
+        MediaSeekRelative {
+            /// Milliseconds of the forward (positive int) or backward (negative int) amount to seek.
+            #[serde(rename = "relativePositionMs")]
+            relative_position_ms: i32,
+        },
+        /// Seek to an absolute position.
+        #[serde(rename = "action.devices.commands.mediaSeekToPosition")]
+        MediaSeekToPosition {
+            /// Millisecond of the absolute position to seek to.
+            #[serde(rename = "absPositionMs")]
+            abs_position_ms: i32,
+        },
+        /// Set repeat playback mode.
+        #[serde(rename = "action.devices.commands.")]
+        MediaRepeatMode {
+            /// True to turn on repeat mode, false to turn off repeat mode.
+            #[serde(rename = "isOn")]
+            is_on: bool,
+            /// If specified, true means turning on single-item repeat mode, false means turning on normal repeat mode (for example a playlist).
+            /// Default: false
+            #[serde(rename = "isSingle")]
+            is_single: Option<bool>,
+        },
+        /// Shuffle the current playlist.
+        #[serde(rename = "action.devices.commands.mediaShuffle")]
+        MediaShuffle,
+        /// Turn captions on.
+        #[serde(rename = "action.devices.commands.mediaClosedCaptioningOn")]
+        MediaClosedCaptioningOn {
+            /// Language or locale for closed captioning.
+            #[serde(rename = "closedCaptioningLanguage")]
+            closed_captioning_language: String,
+            /// Language or locale for user query.
+            #[serde(rename = "userQueryLanguage")]
+            user_query_language: String,
+        },
+        /// Turn captions off.
+        #[serde(rename = "action.devices.commands.mediaClosedCaptioningOff")]
+        MediaClosedCaptioningOff,
+        /// Mutes (sets the volume to 0) or unmutes the device.
+        #[serde(rename = "action.devices.commands.mute")]
+        Mute {
+            /// Whether to mute a device or unmute a device.
+            mute: bool,
+        },
+        /// Set volume to the requested level, based on volumeMaxLevel.
+        #[serde(rename = "action.devices.commands.setVolume")]
+        SetVolume {
+            /// New volume, from 0 to volumeMaxLevel.
+            #[serde(rename = "volumeLevel")]
+            volume_level: i32,
+        },
+        /// Set volume up or down n steps, based on volumeMaxLevel. For commands that use a relative scale,
+        /// the Assistant will select n appropriately to scale to the available steps.
+        /// For example, Make the TV much louder will set a higher number of steps than Make the TV a tiny bit louder.
+        #[serde(rename = "action.devices.commands.volumeRelative")]
+        VolumeRelative {
+            /// negative for 'decrease'.
+            #[serde(rename = "relativeSteps")]
+            relative_steps: i32,
+        },
     }
 }
 

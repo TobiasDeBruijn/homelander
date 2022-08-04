@@ -9,6 +9,7 @@ Homelander does *not* provide an OAuth2 server or a web server.
 
 ## State of completion
 The following [Traits](https://developers.google.com/assistant/smarthome/traits) are currently implemented:
+- AppSelector
 - ArmDisarm
 - Brightness
 - ColorSetting
@@ -44,7 +45,6 @@ The following [Traits](https://developers.google.com/assistant/smarthome/traits)
 - Volume
 
 These traits are not yet implemented:
-- AppSelector
 - CameraStream
 - ObjectDetection
 - Channel

@@ -16,6 +16,7 @@ pub enum ResponsePayload {
 
 pub mod sync {
     use crate::device_trait::Trait;
+    use crate::traits::app_selector::AvailableApplication;
     use crate::traits::arm_disarm::AvailableArmLevels;
     use crate::traits::color_setting::{ColorModel, ColorTemperatureRange};
     use crate::traits::cook::{CookingMode, FoodPreset};
@@ -62,7 +63,7 @@ pub mod sync {
     #[derive(Debug, PartialEq, Serialize, Default)]
     #[serde(rename_all = "camelCase")]
     pub struct SyncAttributes {
-        // TODO appselector
+        pub available_applications: Option<Vec<AvailableApplication>>,
         pub available_arm_levels: Option<AvailableArmLevels>,
         pub command_only_brightness: Option<bool>,
         // TODO camerastream
@@ -218,7 +219,7 @@ pub mod query {
     #[derive(Debug, Default, PartialEq, Serialize)]
     #[serde(rename_all = "camelCase")]
     pub struct TraitsQueryDeviceState {
-        // TODO appselector
+        pub current_application: Option<String>,
         pub is_armed: Option<bool>,
         pub current_arm_level: Option<String>,
         pub exit_allowance: Option<i32>,

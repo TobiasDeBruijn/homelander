@@ -64,7 +64,36 @@ pub mod execute {
     #[derive(Clone, Debug, PartialEq, Deserialize)]
     #[serde(tag = "command", content = "params")]
     pub enum CommandType {
-        // TODO AppSelector
+        /// Install the given application.
+        #[serde(rename = "action.devices.commands.appInstall")]
+        AppInstall {
+            /// Key of the application to install.
+            #[serde(rename = "newApplication")]
+            new_application: Option<String>,
+            /// Name of the application to install.
+            #[serde(rename = "newApplicationName")]
+            new_application_name: Option<String>,
+        },
+        /// Search for the given application.
+        #[serde(rename = "action.devices.commands.appSearch")]
+        AppSearch {
+            /// Key of the application to search for.
+            #[serde(rename = "newApplication")]
+            new_application: Option<String>,
+            /// Name of the application to search for.
+            #[serde(rename = "newApplicationName")]
+            new_application_name: Option<String>,
+        },
+        /// Select the given application.
+        #[serde(rename = "action.devices.commands.appSelect")]
+        AppSelect {
+            /// Key of the application to select.
+            #[serde(rename = "newApplication")]
+            new_application: Option<String>,
+            /// Name of the application to select.
+            #[serde(rename = "newApplicationName")]
+            new_application_name: Option<String>,
+        },
         /// Set the alarm level of this device.
         #[serde(rename = "action.devices.commands.ArmDisarm")]
         ArmDisarm {

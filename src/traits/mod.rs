@@ -2,6 +2,7 @@ use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
 use thiserror::Error;
 
+pub mod app_selector;
 pub mod arm_disarm;
 pub mod brightness;
 pub mod color_setting;
@@ -178,11 +179,6 @@ pub struct Synonym {
     pub synonym: Vec<String>,
     /// Language code
     pub lang: Language,
-}
-
-/// This trait belongs to devices that support media applications, typically from third parties.
-pub trait AppSelector {
-    // TODO
 }
 
 /// This trait belongs to devices which have the capability to stream video feeds to third party screens,

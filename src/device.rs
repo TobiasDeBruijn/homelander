@@ -2,6 +2,7 @@ use crate::device_trait::Trait;
 use crate::device_type::DeviceType;
 use crate::execute_error::ExecuteError;
 use crate::fulfillment::response::execute::CommandState;
+use crate::traits::app_selector::AppSelector;
 use crate::traits::arm_disarm::AvailableArmLevels;
 use crate::traits::cook::{Cook, CookingConfig};
 use crate::traits::dispense::Dispense;
@@ -33,7 +34,7 @@ use crate::traits::timer::Timer;
 use crate::traits::toggles::Toggles;
 use crate::traits::transport_control::TransportControl;
 use crate::traits::volume::Volume;
-use crate::traits::{AppSelector, CameraStream, Channel, ObjectDetection};
+use crate::traits::{CameraStream, Channel, ObjectDetection};
 use crate::{fulfillment, ArmDisarm, Brightness, ColorSetting, CommandOutput, CommandStatus, CommandType, GoogleHomeDevice, SerializableError};
 use std::cell::RefCell;
 use std::error::Error;
@@ -132,7 +133,9 @@ impl<T: GoogleHomeDevice + Send + Sync + Debug + ?Sized + 'static> Device<T> {
     fn query_get_states(&self) -> Result<fulfillment::response::query::TraitsQueryDeviceState, Box<dyn Error>> {
         let mut states = fulfillment::response::query::TraitsQueryDeviceState::default();
 
-        // TODO AppSelector
+        if let Some(d) = &self.device_traits.app_selector {
+            states.current_application = Some(d.borrow().get_current_application()?);
+        }
 
         if let Some(d) = &self.device_traits.arm_disarm {
             states.is_armed = Some(d.borrow().is_armed()?);
@@ -329,7 +332,9 @@ impl<T: GoogleHomeDevice + Send + Sync + Debug + ?Sized + 'static> Device<T> {
     fn sync_set_attributes(&self) -> Result<fulfillment::response::sync::SyncAttributes, Box<dyn Error>> {
         let mut attributes = fulfillment::response::sync::SyncAttributes::default();
 
-        // TODO appselector
+        if let Some(d) = &self.device_traits.app_selector {
+            attributes.available_applications = Some(d.borrow().get_available_applications()?);
+        }
 
         if let Some(d) = &self.device_traits.arm_disarm {
             attributes.available_arm_levels = Some(AvailableArmLevels {
@@ -536,7 +541,57 @@ impl<T: GoogleHomeDevice + Send + Sync + Debug + ?Sized + 'static> Device<T> {
         let mut state = CommandState::default();
 
         match command {
-            // TODO AppSelector
+            CommandType::AppInstall {
+                new_application,
+                new_application_name,
+            } => {
+                let device = match &mut self.device_traits.app_selector {
+                    Some(x) => x,
+                    None => panic!("Unsupported"),
+                };
+
+                if let Some(key) = new_application {
+                    device.borrow_mut().app_install_key(key)?;
+                }
+
+                if let Some(name) = new_application_name {
+                    device.borrow_mut().app_install_name(name)?;
+                }
+            }
+            CommandType::AppSearch {
+                new_application,
+                new_application_name,
+            } => {
+                let device = match &mut self.device_traits.app_selector {
+                    Some(x) => x,
+                    None => panic!("Unsupported"),
+                };
+
+                if let Some(key) = new_application {
+                    device.borrow_mut().app_search_key(key)?;
+                }
+
+                if let Some(name) = new_application_name {
+                    device.borrow_mut().app_search_name(name)?;
+                }
+            }
+            CommandType::AppSelect {
+                new_application,
+                new_application_name,
+            } => {
+                let device = match &mut self.device_traits.app_selector {
+                    Some(x) => x,
+                    None => panic!("Unsupported"),
+                };
+
+                if let Some(key) = new_application {
+                    device.borrow_mut().app_select_key(key)?;
+                }
+
+                if let Some(name) = new_application_name {
+                    device.borrow_mut().app_select_name(name)?;
+                }
+            }
             CommandType::ArmDisarm { arm, cancel, arm_level, .. } => {
                 let device = match &mut self.device_traits.arm_disarm {
                     Some(x) => x,
@@ -1143,15 +1198,14 @@ impl<T: GoogleHomeDevice + Send + Sync + Debug + ?Sized + 'static> Device<T> {
         Ok(state)
     }
 
-    /*
     /// Register the [AppSelector] trait
     pub fn set_app_selector(&mut self)
     where
         T: AppSelector + Sized,
     {
-        todo!()
+        self.device_traits.app_selector = Some(self.inner.clone());
+        self.traits.push(Trait::AppSelector);
     }
-     */
 
     /// Register the [ArmDisarm] trait
     pub fn set_arm_disarm(&mut self)

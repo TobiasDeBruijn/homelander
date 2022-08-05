@@ -4,6 +4,7 @@ use crate::execute_error::ExecuteError;
 use crate::fulfillment::response::execute::CommandState;
 use crate::traits::app_selector::AppSelector;
 use crate::traits::arm_disarm::AvailableArmLevels;
+use crate::traits::camera_stream::CameraStream;
 use crate::traits::cook::{Cook, CookingConfig};
 use crate::traits::dispense::Dispense;
 use crate::traits::dock::Dock;
@@ -34,7 +35,7 @@ use crate::traits::timer::Timer;
 use crate::traits::toggles::Toggles;
 use crate::traits::transport_control::TransportControl;
 use crate::traits::volume::Volume;
-use crate::traits::{CameraStream, Channel, ObjectDetection};
+use crate::traits::{Channel, ObjectDetection};
 use crate::{fulfillment, ArmDisarm, Brightness, ColorSetting, CommandOutput, CommandStatus, CommandType, GoogleHomeDevice, SerializableError};
 use std::cell::RefCell;
 use std::error::Error;
@@ -347,7 +348,11 @@ impl<T: GoogleHomeDevice + Send + Sync + Debug + ?Sized + 'static> Device<T> {
             attributes.command_only_brightness = Some(d.borrow().is_command_only_brightness()?);
         }
 
-        // TODO camerastream
+        if let Some(d) = &self.device_traits.camera_stream {
+            attributes.camera_stream_supported_protocols = Some(d.borrow().get_supported_camera_stream_protocols()?);
+            attributes.camera_stream_need_auth_token = Some(d.borrow().need_auth_token()?);
+        }
+
         // TODO channel
 
         if let Some(d) = &self.device_traits.color_setting {
@@ -498,8 +503,6 @@ impl<T: GoogleHomeDevice + Send + Sync + Debug + ?Sized + 'static> Device<T> {
             attributes.command_only_volume = d.borrow().is_command_only_volume()?;
         }
 
-        // TODO the rest of the traits
-
         Ok(attributes)
     }
 
@@ -635,7 +638,17 @@ impl<T: GoogleHomeDevice + Send + Sync + Debug + ?Sized + 'static> Device<T> {
                     device.borrow_mut().set_brightness_relative_weight(brightness_relative_weight)?;
                 }
             }
-            // TODO CameraStream
+            CommandType::GetCameraStream {
+                stream_to_chromecast,
+                supported_stream_protocols,
+            } => {
+                let device = match &mut self.device_traits.camera_stream {
+                    Some(x) => x,
+                    None => panic!("Unsupported"),
+                };
+
+                device.borrow_mut().get_camera_stream(stream_to_chromecast, supported_stream_protocols)?;
+            }
             // TODO Channel
             CommandType::ColorAbsolute { color } => {
                 let device = match &mut self.device_traits.color_setting {
@@ -1225,15 +1238,15 @@ impl<T: GoogleHomeDevice + Send + Sync + Debug + ?Sized + 'static> Device<T> {
         self.traits.push(Trait::Brightness);
     }
 
-    /*
     /// Register the [CameraStream] trait
     pub fn set_camera_stream(&mut self)
     where
         T: CameraStream + Sized,
     {
-        todo!();
+        self.device_traits.camera_stream = Some(self.inner.clone());
+        self.traits.push(Trait::CameraStream);
     }
-
+    /*
     /// Register the [Channel] trait
     pub fn set_channel(&mut self)
     where

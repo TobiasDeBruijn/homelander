@@ -33,6 +33,7 @@ pub mod query {
 }
 
 pub mod execute {
+    use crate::traits::camera_stream::CameraStreamProtocol;
     use crate::traits::color_setting::ColorCommand;
     use crate::traits::cook::CookingMode;
     use crate::traits::open_close::OpenDirection;
@@ -125,7 +126,16 @@ pub mod execute {
             #[serde(rename = "brightnessRelativeWeight")]
             brightness_relative_weight: Option<i32>,
         },
-        // TODO CameraStream
+        /// Get the camera stream
+        #[serde(rename = "action.devices.commands.GetCameraStream")]
+        GetCameraStream {
+            /// Whether the stream will be played on a Chromecast device.
+            #[serde(rename = "StreamToChromecast")]
+            stream_to_chromecast: bool,
+            /// Media types/formats supported by the desired destination.
+            #[serde(rename = "SupportedStreamProtocols")]
+            supported_stream_protocols: Vec<CameraStreamProtocol>,
+        },
         // TODO Channel
         /// Set the absolute color value.
         #[serde(rename = "action.devices.commands.ColorAbsolute")]

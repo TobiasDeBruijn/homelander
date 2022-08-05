@@ -5,6 +5,7 @@ use thiserror::Error;
 pub mod app_selector;
 pub mod arm_disarm;
 pub mod brightness;
+pub mod camera_stream;
 pub mod color_setting;
 pub mod cook;
 pub mod dispense;
@@ -179,14 +180,6 @@ pub struct Synonym {
     pub synonym: Vec<String>,
     /// Language code
     pub lang: Language,
-}
-
-/// This trait belongs to devices which have the capability to stream video feeds to third party screens,
-/// Chromecast-connected screens, or smartphones. By and large, these are security cameras or baby cameras.
-/// But this trait also applies to more complex devices which have a camera on them
-/// (for example, video-conferencing devices or a vacuum robot with a camera on it).
-pub trait CameraStream {
-    // TODO
 }
 
 /// This trait belongs to devices that support TV channels on a media device.

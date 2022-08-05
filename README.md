@@ -12,6 +12,7 @@ The following [Traits](https://developers.google.com/assistant/smarthome/traits)
 - AppSelector
 - ArmDisarm
 - Brightness
+- CameraStream
 - ColorSetting
 - Cook
 - Dispense
@@ -45,7 +46,6 @@ The following [Traits](https://developers.google.com/assistant/smarthome/traits)
 - Volume
 
 These traits are not yet implemented:
-- CameraStream
 - ObjectDetection
 - Channel
 

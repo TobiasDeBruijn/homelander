@@ -86,6 +86,10 @@ impl<T: GoogleHomeDevice + Send + Debug + Sync + 'static> Device<T> {
 }
 
 impl<T: GoogleHomeDevice + Send + Sync + Debug + ?Sized + 'static> Device<T> {
+    pub(crate) fn disconnect(&mut self) {
+        self.inner.borrow_mut().disconnect();
+    }
+
     /// Execute the QUERY intent
     #[instrument]
     pub(crate) fn query(&self) -> fulfillment::response::query::QueryDeviceState {

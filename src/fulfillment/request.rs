@@ -16,6 +16,7 @@ pub enum Input {
     Query(query::Payload),
     #[serde(rename = "action.devices.SYNC")]
     Sync,
+    Disconnect,
 }
 
 pub mod query {

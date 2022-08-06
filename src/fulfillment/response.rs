@@ -12,6 +12,7 @@ pub enum ResponsePayload {
     Sync(sync::Payload),
     Query(query::Payload),
     Execute(execute::Payload),
+    Disconnect,
 }
 
 pub mod sync {

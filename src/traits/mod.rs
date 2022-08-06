@@ -67,6 +67,12 @@ pub trait GoogleHomeDevice {
 
     /// Indicates if the device is online (that is, reachable) or not.
     fn is_online(&self) -> bool;
+
+    /// This intent is triggered to inform you when a user has unlinked their device account from Google Assistant.
+    ///
+    /// This intent indicates that Google Assistant will not send additional intents for this user.
+    /// After receiving the DISCONNECT intent, your cloud service should cease publishing changes to Google with Request Sync and Report State.
+    fn disconnect(&mut self);
 }
 
 #[derive(Debug, PartialEq, Serialize, Error)]

@@ -271,6 +271,10 @@ impl Homelander {
                 }
                 Input::Sync => fulfillment::response::ResponsePayload::Sync(self.sync()),
                 Input::Query(payload) => fulfillment::response::ResponsePayload::Query(self.query(payload)),
+                Input::Disconnect => {
+                    self.devices.iter_mut().for_each(|x| x.disconnect());
+                    fulfillment::response::ResponsePayload::Disconnect
+                }
             })
             .collect::<Vec<_>>()
             .remove(0);
@@ -398,6 +402,8 @@ mod test {
         fn is_online(&self) -> bool {
             true
         }
+
+        fn disconnect(&mut self) {}
     }
 
     impl ArmDisarm for Foo {

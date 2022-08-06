@@ -13,6 +13,7 @@ The following [Traits](https://developers.google.com/assistant/smarthome/traits)
 - ArmDisarm
 - Brightness
 - CameraStream
+- Channel
 - ColorSetting
 - Cook
 - Dispense
@@ -47,7 +48,6 @@ The following [Traits](https://developers.google.com/assistant/smarthome/traits)
 
 These traits are not yet implemented:
 - ObjectDetection
-- Channel
 
 They are however planned to be implemented, though. You can help by submitting a pull request with the implementation. 
 You will find the traits definition in the `traits` module, they are completely non-functional though.

@@ -19,6 +19,7 @@ pub mod sync {
     use crate::traits::app_selector::AvailableApplication;
     use crate::traits::arm_disarm::AvailableArmLevels;
     use crate::traits::camera_stream::CameraStreamProtocol;
+    use crate::traits::channel::AvailableChannel;
     use crate::traits::color_setting::{ColorModel, ColorTemperatureRange};
     use crate::traits::cook::{CookingMode, FoodPreset};
     use crate::traits::dispense::{DispenseItem, DispensePreset};
@@ -69,7 +70,8 @@ pub mod sync {
         pub command_only_brightness: Option<bool>,
         pub camera_stream_supported_protocols: Option<Vec<CameraStreamProtocol>>,
         pub camera_stream_need_auth_token: Option<bool>,
-        // TODO channel
+        pub available_channels: Option<Vec<AvailableChannel>>,
+        pub command_only_channels: Option<bool>,
         pub command_only_color_setting: Option<bool>,
         pub color_model: Option<ColorModel>,
         pub color_temperature_range: Option<ColorTemperatureRange>,

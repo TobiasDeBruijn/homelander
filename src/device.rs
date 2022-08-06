@@ -5,6 +5,7 @@ use crate::fulfillment::response::execute::CommandState;
 use crate::traits::app_selector::AppSelector;
 use crate::traits::arm_disarm::AvailableArmLevels;
 use crate::traits::camera_stream::CameraStream;
+use crate::traits::channel::Channel;
 use crate::traits::cook::{Cook, CookingConfig};
 use crate::traits::dispense::Dispense;
 use crate::traits::dock::Dock;
@@ -35,7 +36,7 @@ use crate::traits::timer::Timer;
 use crate::traits::toggles::Toggles;
 use crate::traits::transport_control::TransportControl;
 use crate::traits::volume::Volume;
-use crate::traits::{Channel, ObjectDetection};
+use crate::traits::ObjectDetection;
 use crate::{fulfillment, ArmDisarm, Brightness, ColorSetting, CommandOutput, CommandStatus, CommandType, GoogleHomeDevice, SerializableError};
 use std::cell::RefCell;
 use std::error::Error;
@@ -353,7 +354,10 @@ impl<T: GoogleHomeDevice + Send + Sync + Debug + ?Sized + 'static> Device<T> {
             attributes.camera_stream_need_auth_token = Some(d.borrow().need_auth_token()?);
         }
 
-        // TODO channel
+        if let Some(d) = &self.device_traits.channel {
+            attributes.available_channels = Some(d.borrow().get_available_channels()?);
+            attributes.command_only_channels = d.borrow().is_command_only_channels()?;
+        }
 
         if let Some(d) = &self.device_traits.color_setting {
             attributes.command_only_color_setting = Some(d.borrow().is_command_only_color_setting()?);
@@ -649,7 +653,38 @@ impl<T: GoogleHomeDevice + Send + Sync + Debug + ?Sized + 'static> Device<T> {
 
                 device.borrow_mut().get_camera_stream(stream_to_chromecast, supported_stream_protocols)?;
             }
-            // TODO Channel
+            CommandType::SelectChannel {
+                channel_code,
+                channel_name,
+                channel_number,
+            } => {
+                let device = match &mut self.device_traits.channel {
+                    Some(x) => x,
+                    None => panic!("Unsupported"),
+                };
+
+                if let Some(code) = channel_code {
+                    device.borrow_mut().select_channel_by_id(code, channel_name, channel_number)?;
+                } else if let Some(number) = channel_number {
+                    device.borrow_mut().select_channel_by_number(number)?;
+                }
+            }
+            CommandType::RelativeChannel { relative_channel_change } => {
+                let device = match &mut self.device_traits.channel {
+                    Some(x) => x,
+                    None => panic!("Unsupported"),
+                };
+
+                device.borrow_mut().select_channel_relative(relative_channel_change)?;
+            }
+            CommandType::ReturnChannel => {
+                let device = match &mut self.device_traits.channel {
+                    Some(x) => x,
+                    None => panic!("Unsupported"),
+                };
+
+                device.borrow_mut().return_to_last_channel()?;
+            }
             CommandType::ColorAbsolute { color } => {
                 let device = match &mut self.device_traits.color_setting {
                     Some(x) => x,
@@ -1246,15 +1281,15 @@ impl<T: GoogleHomeDevice + Send + Sync + Debug + ?Sized + 'static> Device<T> {
         self.device_traits.camera_stream = Some(self.inner.clone());
         self.traits.push(Trait::CameraStream);
     }
-    /*
+
     /// Register the [Channel] trait
     pub fn set_channel(&mut self)
     where
         T: Channel + Sized,
     {
-        todo!();
+        self.device_traits.channel = Some(self.inner.clone());
+        self.traits.push(Trait::Channel);
     }
-     */
 
     /// Register the [ColorSetting] trait
     pub fn set_color_setting(&mut self)

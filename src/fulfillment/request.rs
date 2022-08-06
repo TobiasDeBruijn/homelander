@@ -136,7 +136,29 @@ pub mod execute {
             #[serde(rename = "SupportedStreamProtocols")]
             supported_stream_protocols: Vec<CameraStreamProtocol>,
         },
-        // TODO Channel
+        /// Set the current channel to a specific value.
+        #[serde(rename = "action.devices.commands.selectChannel")]
+        SelectChannel {
+            /// Unique identifier for the requested channel, matching one of the availableChannels.
+            #[serde(rename = "channelCode")]
+            channel_code: Option<String>,
+            /// User-friendly name of the requested channel.
+            #[serde(rename = "channelName")]
+            channel_name: Option<String>,
+            /// Numeric identifier for the requested channel.
+            #[serde(rename = "channelNumber")]
+            channel_number: Option<String>,
+        },
+        /// Adjust the current channel by a relative amount.
+        #[serde(rename = "action.devices.commands.relativeChannel")]
+        RelativeChannel {
+            /// The number of channels to increase or decrease.
+            #[serde(rename = "relativeChannelChange	")]
+            relative_channel_change: i32,
+        },
+        /// Return to the last/previous channel the user was on.
+        #[serde(rename = "action.devices.commands.returnChannel")]
+        ReturnChannel,
         /// Set the absolute color value.
         #[serde(rename = "action.devices.commands.ColorAbsolute")]
         ColorAbsolute {

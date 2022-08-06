@@ -6,6 +6,7 @@ pub mod app_selector;
 pub mod arm_disarm;
 pub mod brightness;
 pub mod camera_stream;
+pub mod channel;
 pub mod color_setting;
 pub mod cook;
 pub mod dispense;
@@ -180,11 +181,6 @@ pub struct Synonym {
     pub synonym: Vec<String>,
     /// Language code
     pub lang: Language,
-}
-
-/// This trait belongs to devices that support TV channels on a media device.
-pub trait Channel {
-    // TODO
 }
 
 /// This trait belongs to devices that can detect objects or people and send a notification to the user.

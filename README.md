@@ -59,4 +59,5 @@ You will find the traits definition in the `traits` module, they are completely 
 - Requesting a QUERY from Google
 
 # License
-Homelander is dual licensed under the MIT and Apache-2.0 license
+Homelander is dual licensed under the MIT and Apache-2.0 license.
+The documentation for functions and traits is licensed under the [Creative Commons Attribution 4.0 License](https://creativecommons.org/licenses/by/4.0/) as it is partially copied from the Google Home Documentation.

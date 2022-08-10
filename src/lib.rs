@@ -33,6 +33,9 @@
 //!     }
 //!
 //!     fn will_report_state(&self) -> bool {
+//!         // Will this Device be reporting state to Google?
+//!         // Note that as of August 6 2022, this isn't implemented in Homelander yet,
+//!         // Until it is, this should *always* be false.
 //!         false
 //!     }
 //!
@@ -45,7 +48,11 @@
 //!     }
 //!
 //!     fn is_online(&self) -> bool {
-//!            true
+//!         true
+//!     }
+//!
+//!     fn disconnect(&mut self) {
+//!         // Handle your disconnect here
 //!     }
 //! }
 //!
@@ -113,7 +120,11 @@
 //! #    }
 //! #
 //! #    fn is_online(&self) -> bool {
-//! #           true
+//! #        true
+//! #    }
+//! #
+//! #    fn disconnect(&mut self) {
+//! #        todo!()
 //! #    }
 //! # }
 //! #

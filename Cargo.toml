@@ -9,6 +9,7 @@ repository = "https://github.com/TobiasDeBruijn/homelander"
 documentation = "https://docs.rs/homelander/latest/homelander/"
 keywords = ["google", "home", "assistant", "integration"]
 categories = ["api-bindings"]
+description = "Google Home integration framework"
 
 [dependencies]
 thiserror = "1.0.31"
